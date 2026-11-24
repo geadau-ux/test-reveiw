@@ -612,6 +612,51 @@ details.more > summary::-webkit-details-marker { display: none; }
 .srcbar-thumb { padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: zoom-in; overflow: hidden; height: 52px; flex: none; }
 .srcbar-thumb img { display: block; height: 50px; width: auto; max-width: 120px; object-fit: contain; }
 .srcbar-thumb:hover { border-color: var(--mark); }
+
+/* ===== 分頁按鈕卡片：每個功能一個顏色，選中時填滿 ===== */
+:root, :root:not([data-theme="dark"]) { --blue-solid: #2a6fb8; --green-solid: #23845a; --orange-solid: #c4621c; --purple-solid: #7a3dc2; --yellow-solid: #b98a00; --tab-shadow: 0 1px 0 rgba(20,30,80,.06), 0 6px 14px -10px rgba(20,30,80,.35); }
+:root[data-theme="dark"] { --blue-solid: #2f6fb3; --green-solid: #1f7a52; --orange-solid: #b35a1c; --purple-solid: #6f42b8; --yellow-solid: #9c7400; --tab-shadow: 0 6px 14px -10px rgba(0,0,0,.8); }
+.tabs { gap: 10px; padding: 10px; align-items: stretch; }
+.tab { --t-bg: var(--mark-soft); --t-line: var(--mark-line); --t-ink: var(--mark); --t-solid: var(--mark);
+  flex: 1 1 130px; min-width: 120px; background: var(--t-bg); border: 1.5px solid var(--t-line); color: var(--t-ink); border-radius: 14px;
+  padding: 10px 12px 9px; gap: 6px; box-shadow: var(--tab-shadow); cursor: pointer; transition: transform .12s ease, box-shadow .12s ease, background .12s; }
+.tab .tab-l { font-size: 15px; font-weight: 800; color: var(--t-ink); }
+.tab svg, .tab i { color: var(--t-ink); }
+.tab:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -12px rgba(20,30,80,.45); color: var(--t-ink); }
+.tab:active { transform: translateY(0); }
+.tab .tab-s { background: var(--paper); border-radius: 999px; padding: 1px 10px; font-size: 11.5px; color: var(--ink-soft); border: 1px solid var(--t-line); }
+.tab .tab-s.ok { color: var(--green); border-color: var(--green-line); }
+.tab .tab-s.run { color: var(--t-ink); }
+.tab .tab-s.ex { color: var(--orange); border-color: var(--orange-line); }
+.tab[data-k="analysis"] { --t-bg: var(--mark-soft); --t-line: var(--mark-line); --t-ink: var(--mark); --t-solid: #2c3fae; }
+.tab[data-k="similar"]  { --t-bg: var(--blue-soft);   --t-line: var(--blue-line);   --t-ink: var(--blue);   --t-solid: var(--blue-solid); }
+.tab[data-k="remedial"] { --t-bg: var(--green-soft);  --t-line: var(--green-line);  --t-ink: var(--green);  --t-solid: var(--green-solid); }
+.tab[data-k="polya"]    { --t-bg: var(--orange-soft); --t-line: var(--orange-line); --t-ink: var(--orange); --t-solid: var(--orange-solid); }
+.tab[data-k="conj"]     { --t-bg: var(--purple-soft); --t-line: var(--purple-line); --t-ink: var(--purple); --t-solid: var(--purple-solid); }
+.tab[data-k="editor"]   { --t-bg: var(--yellow-soft); --t-line: var(--yellow-line); --t-ink: var(--yellow-ink); --t-solid: var(--yellow-solid); }
+:root[data-theme="dark"] .tab[data-k="editor"] { --t-ink: var(--yellow); }
+.tab[aria-selected="true"] { background: var(--t-solid); border-color: var(--t-solid); box-shadow: 0 10px 22px -12px var(--t-solid); }
+.tab[aria-selected="true"] .tab-l, .tab[aria-selected="true"] svg, .tab[aria-selected="true"] i { color: #ffffff; }
+.tab[aria-selected="true"] .tab-s, .tab[aria-selected="true"] .tab-s.ok, .tab[aria-selected="true"] .tab-s.run, .tab[aria-selected="true"] .tab-s.ex { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.45); color: #ffffff; }
+.tab:focus-visible { outline: 3px solid var(--t-solid); outline-offset: 2px; }
+.tabs-sep { border: 0; padding: 0 2px; gap: 3px; flex: 0 0 auto; }
+.tabs-sep b { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink); background: var(--paper); border: 1px dashed var(--line); border-radius: 999px; padding: 2px 10px; }
+.tabs-sep span { font-size: 11px; }
+@media (max-width: 860px) { .tab { flex: 1 1 calc(50% - 10px); } .tab[data-k="analysis"] { flex-basis: 100%; } .tabs-sep { flex-basis: 100%; flex-direction: row; justify-content: center; border: 0; padding: 0; } }
+
+.btn.primary.pulse { animation: pulseBtn 1.2s ease-in-out 2; }
+@keyframes pulseBtn { 0%, 100% { box-shadow: var(--glow); } 50% { box-shadow: 0 0 0 8px var(--mark-soft), var(--glow); transform: scale(1.02); } }
+@media (prefers-reduced-motion: reduce) { .btn.primary.pulse { animation: none; } }
+
+@media (min-width: 861px) { .tabs { flex-wrap: nowrap; } .tab { flex: 1 1 0; min-width: 0; padding-inline: 8px; } .tab .tab-l { white-space: nowrap; font-size: 14.5px; } .tab .tab-s { white-space: nowrap; } .tabs-sep span { display: none; } }
+@media (min-width: 861px) and (max-width: 1180px) { .tab .tab-l svg, .tab .tab-l i { display: none; } }
+.mobile-key { display: none; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid var(--yellow-line, var(--line)); border-radius: 14px; background: var(--yellow-soft, var(--field)); }
+.mobile-key ol { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; font-size: 14px; line-height: 1.6; }
+.mobile-key li .btn { margin-bottom: 4px; }
+.mobile-key li .hint { display: block; }
+@media (max-width: 860px), (pointer: coarse) { .mobile-key { display: flex; order: -1; } #setPrompt { order: -2; } }
+.topband header.top p.keyget-2 { margin-top: -6px; opacity: .9; font-size: 13px; }
+.topband header.top p.keyget:not(.keyget-2) svg { color: var(--yellow); }
 </style>
 </head>
 <body>
@@ -628,7 +673,8 @@ details.more > summary::-webkit-details-marker { display: none; }
       <button type="button" class="btn small" id="openSettings"><i class="fa-solid fa-key"></i> API 金鑰／型號</button>
     </div>
     <p style="flex-basis:100%">上傳數學題目，找出誘答陷阱、分析錯題原因、產出教學建議與教案（優履工作室研發）</p>
-    <p class="keyget"><i class="fa-solid fa-key"></i> 沒有 API Key？可以直接到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 API Key <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></p>
+    <p class="keyget"><i class="fa-solid fa-star"></i> 推薦：有 Claude 帳號的老師，直接用 <a href="https://claude.ai/artifact/TPhniT7wNiLfpGERFfE23f" target="_blank" rel="noopener noreferrer">免金鑰版（claude.ai）<i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>，手機也能用，不用申請任何金鑰。</p>
+    <p class="keyget keyget-2"><i class="fa-solid fa-key"></i> 想用自己的 Gemini 金鑰：到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 API Key <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>，再按右上「API 金鑰／型號」貼上。</p>
   </header>
 </div>
 <div class="wrap">
@@ -749,6 +795,7 @@ details.more > summary::-webkit-details-marker { display: none; }
     <div class="label" style="margin-top:6px">2．輸入 API 金鑰</div>
     <div class="keyrow">
       <input type="password" id="keyInput" autocomplete="off" spellcheck="false" placeholder="貼上你的 API 金鑰">
+      <button type="button" class="btn small ghost" id="keyPaste" title="貼上剛複製的金鑰"><i class="fa-solid fa-paste"></i> 貼上</button>
       <button type="button" class="btn small ghost" id="keyShow">顯示</button>
     </div>
     <p class="hint" id="keyHelp"></p>
@@ -759,6 +806,15 @@ details.more > summary::-webkit-details-marker { display: none; }
     <div class="row">
       <button type="button" class="btn small" id="testKey"><i class="fa-solid fa-plug"></i> 測試連線</button>
       <span class="test-out" id="testOut"></span>
+    </div>
+    <div class="mobile-key" id="mobileKey">
+      <div class="label"><i class="fa-solid fa-mobile-screen-button"></i> 在手機上設定金鑰（只要做一次）</div>
+      <ol>
+        <li><a class="btn small" href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-key"></i> 到 Google AI Studio 取得金鑰</a><span class="hint">用 Google 帳號登入，按「Create API key」建立。</span></li>
+        <li>在金鑰旁按複製圖示，再回到這個頁面。</li>
+        <li>按上方金鑰欄旁的「<i class="fa-solid fa-paste"></i> 貼上」，再按「測試連線」。</li>
+        <li>勾選「記住金鑰」，按「儲存設定」。之後打開就能直接用。</li>
+      </ol>
     </div>
     <div class="keynote"><b>金鑰安全</b><br>金鑰只存在這個瀏覽器裡，分析時由瀏覽器直接送到 Google 或 Anthropic，不會經過其他伺服器。費用依各家 API 計價，由金鑰擁有者支付。</div>
   </div>
@@ -784,6 +840,7 @@ details.more > summary::-webkit-details-marker { display: none; }
 </dialog>
 
 <script>
+
 // ---------- 數學符號整理：把 LaTeX 語法轉成一般人看得懂的符號 ----------
 const MATH_SYM = {
   triangle: "△", angle: "∠", measuredangle: "∠", cong: "≅", sim: "∼", simeq: "≃", approx: "≈",
@@ -1068,7 +1125,7 @@ $("modeText").onclick = () => setMode("text");
 function takeFile(f) {
   if (!f || !f.type.startsWith("image/")) { toast("請選擇圖片檔"); return; }
   prepImage(f).then(({ preview, image }) => {
-    state.imageFile = image; $("previewImg").src = preview; $("preview").hidden = false; $("drop").hidden = true;
+    state.imageFile = image; $("previewImg").src = preview; $("preview").hidden = false; $("drop").hidden = true; afterInput();
   }).catch((e) => toast(e.message));
   setMode("img");
 }
@@ -1084,7 +1141,7 @@ function putText(t, name) {
   if (!t) { toast("內容是空的"); return; }
   setMode("text"); $("qtext").value = t; store("ea_text", t);
   toast(name ? `已讀入「${name}」，放在「題目文字」` : "已貼上文字，放在「題目文字」");
-  $("qtext").focus(); $("qtext").setSelectionRange(0, 0); $("qtext").scrollTop = 0;
+  $("qtext").focus(); $("qtext").setSelectionRange(0, 0); $("qtext").scrollTop = 0; afterInput();
 }
 function takeTextFile(f) {
   const r = new FileReader();
@@ -1466,7 +1523,7 @@ function renderTabs() {
   const tabs = TABS.filter(([k]) => k !== "editor" || state.tab === "editor");
   $("tabs").innerHTML = tabs.map(([k, l], i) => {
     const [cls, st] = k === "editor" ? ["", "進階"] : tabStatus(k);
-    const sep = k === "similar" ? '<div class="tabs-sep" aria-hidden="true"><b>選用延伸</b><span>順序不限・可同時產生</span></div>' : "";
+    const sep = k === "similar" ? '<div class="tabs-sep" aria-hidden="true"><b><i class="fa-solid fa-angles-right"></i> 選用延伸</b><span>順序不限・可同時產生</span></div>' : "";
     return `${sep}<button class="tab" role="tab" data-k="${k}" aria-selected="${state.tab === k}"><span class="tab-l"><i class="fa-solid ${TAB_ICONS[k]}"></i>${l}</span><span class="tab-s ${cls}">${st}</span></button>`;
   }).join("");
   $("tabs").querySelectorAll(".tab").forEach((b) => (b.onclick = () => { state.tab = b.dataset.k; render(); }));
@@ -1922,6 +1979,18 @@ $("previewImg").title = "點一下：浮動放大對照";
 $("previewImg").addEventListener("click", openFloat);
 document.addEventListener("click", (e) => { if (e.target.closest("[data-act=float]")) openFloat(); });
 
+// 金鑰欄旁的「貼上」
+$("keyPaste").onclick = async () => {
+  try { const t = (await navigator.clipboard.readText()).trim(); if (!t) throw 0; $("keyInput").value = t; $("keyInput").type = "password"; toast("已貼上金鑰"); }
+  catch (e) { $("keyInput").focus(); toast("請長按金鑰欄，選「貼上」"); }
+};
+// 手機：放好題目後，自動捲到「開始分析」並提示
+function afterInput() {
+  if (innerWidth >= 860) return;
+  const b = $("analyzeBtn"); b.scrollIntoView({ behavior: "smooth", block: "center" });
+  b.classList.remove("pulse"); void b.offsetWidth; b.classList.add("pulse");
+}
+
 // ---------- 匯出 ----------
 function analysisMd(a) {
   let s = `# 試題分析報告（分析深度：${DEPTHS[a.depth || "standard"]?.name || "標準"}）\n\n`;
@@ -2032,7 +2101,7 @@ async function downloadCurrent() {
 function needKey(fn) {
   if (activeKey()) return false;
   pending = fn;
-  openSettings(`請先輸入 ${PROVIDERS[cfg.provider].name} 的 API 金鑰，儲存後會自動開始。`);
+  openSettings(`請先輸入 ${PROVIDERS[cfg.provider].name} 的 API 金鑰，儲存後會自動開始。` + (innerWidth < 860 ? "\n手機上可以照下方「在手機上設定金鑰」的步驟操作：複製金鑰後，按金鑰欄旁的「貼上」就好，不用手打。" : ""));
   return true;
 }
 const errText = (e) => e?.message || "連線失敗，請檢查網路後再試一次";
@@ -2045,6 +2114,7 @@ async function analyze() {
   if (!inp) { setStatus(state.mode === "img" ? "請先放入題目圖片。" : "請先貼上題目文字。", true); return; }
   if (needKey(analyze)) return;
   Object.values(state.jobs || {}).forEach((c) => c.abort()); state.jobs = {};
+  if (innerWidth < 860) setTimeout(() => $("tabs").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   setStatus(""); state.md = {}; state.sim = null; state.tab = "analysis"; state.busy = "analysis";
   state.ctl = new AbortController(); render();
   try {
