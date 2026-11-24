@@ -352,82 +352,157 @@ dialog#zoomDlg::backdrop { background: rgba(6,7,18,.6); -webkit-backdrop-filter:
 #zoomBody { line-height: 1.75; }
 #zoomBody .md { max-width: none; }
 
-/* ===== 配色 v2：午夜藍底＋靛藍與青綠極光，單一強調色（靛藍→天青），其餘一律中性玻璃 ===== */
-:root, :root:not([data-theme="light"]) {
-  --bg: #070b16;
-  --grad: radial-gradient(1000px 620px at 0% -10%, rgba(79,70,229,.32), transparent 62%),
-          radial-gradient(820px 560px at 100% 0%, rgba(14,165,164,.20), transparent 60%),
-          radial-gradient(900px 640px at 50% 120%, rgba(56,189,248,.12), transparent 60%),
-          linear-gradient(180deg, #070b16 0%, #0b1122 60%, #080c18 100%);
-  --paper: rgba(148,163,214,.07); --paper-strong: rgba(148,163,214,.12); --field: rgba(3,6,15,.45);
-  --dialog: rgba(13,18,36,.92);
-  --ink: #e7ebf7; --ink-soft: #97a1bd; --line: rgba(160,175,220,.16);
-  --mark: #8ea2ff; --mark-soft: rgba(142,162,255,.13);
-  --sky: #5ccfe6; --sky-soft: rgba(92,207,230,.10);
-  --green: #5fd4a7; --green-soft: rgba(95,212,167,.11);
-  --red: #f08ca0; --red-soft: rgba(240,140,160,.10); --pink-soft: rgba(240,140,160,.08);
-  --accent: linear-gradient(120deg, #6d7cff 0%, #5ab8f0 100%);
-  --glow: 0 8px 24px -10px rgba(98,140,255,.65);
-  --shadow: 0 16px 40px -18px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.05);
+
+/* ===== 配色 v3：白底卡片＋深靛藍標題橫幅＋黃色提醒條；各段用淡藍、淡綠、淡橘、淡紫區分 ===== */
+:root, :root:not([data-theme="dark"]) {
+  --bg: #f3f5fa; --grad: #f3f5fa;
+  --paper: #ffffff; --paper-strong: #ffffff; --field: #f7f9fd; --dialog: #ffffff;
+  --ink: #1d2742; --ink-soft: #5c6782; --line: #e2e7f1;
+  --mark: #3a4fc0; --mark-soft: #eef1fd; --mark-line: #d3daf6;
+  --blue: #2a6fb8; --blue-soft: #eef6fd; --blue-line: #b5d4f1; --blue-tag: #dcebfa;
+  --green: #23845a; --green-soft: #effaf4; --green-line: #a9dfc3; --green-tag: #d8f2e4;
+  --orange: #c4621c; --orange-soft: #fff6ec; --orange-line: #f6cfa4; --orange-tag: #fde3c6;
+  --purple: #7a3dc2; --purple-soft: #f8f2ff; --purple-line: #d2b8f2; --purple-tag: #ead9fb;
+  --yellow: #f2c94c; --yellow-ink: #5a4500; --yellow-soft: #fff9e6; --yellow-line: #f1d98a;
+  --red: #c23d5c; --red-soft: #fdeff2; --sky: var(--blue); --sky-soft: var(--blue-soft); --pink-soft: var(--red-soft);
+  --band: linear-gradient(100deg, #1c2a7a 0%, #2a3aa8 55%, #2f47bd 100%); --band-title: #7fe3ff; --band-ink: #ffffff;
+  --accent: linear-gradient(100deg, #2c3fae 0%, #3a5ad0 100%);
+  --glow: 0 8px 18px -10px rgba(40,60,170,.55);
+  --shadow: 0 6px 24px -12px rgba(30,45,110,.18);
+  --on-accent: #ffffff;
+  --f-display: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0f1424; --grad: #0f1424;
+  --paper: #171e33; --paper-strong: #1d2540; --field: #121829; --dialog: #182039;
+  --ink: #e6eaf5; --ink-soft: #9aa5c0; --line: #2a3352;
+  --mark: #9fb0ff; --mark-soft: #222c50; --mark-line: #34407a;
+  --blue: #8cc4f5; --blue-soft: #14253d; --blue-line: #2c4e77; --blue-tag: #1c3556;
+  --green: #79d7a8; --green-soft: #132c22; --green-line: #2a5d45; --green-tag: #1b3d2e;
+  --orange: #f4b37a; --orange-soft: #2d2016; --orange-line: #6b4628; --orange-tag: #3e2b1b;
+  --purple: #c7a6f5; --purple-soft: #231a37; --purple-line: #4d3a73; --purple-tag: #31244d;
+  --yellow: #d9b23c; --yellow-ink: #2b2100; --yellow-soft: #2b2512; --yellow-line: #5c4c1d;
+  --red: #f29bb0; --red-soft: #33191f; --sky: var(--blue); --sky-soft: var(--blue-soft); --pink-soft: var(--red-soft);
+  --band: linear-gradient(100deg, #121a52 0%, #1b2775 55%, #20308a 100%); --band-title: #7fe3ff; --band-ink: #ffffff;
+  --accent: linear-gradient(100deg, #3348c4 0%, #4a68e0 100%);
+  --glow: 0 8px 18px -10px rgba(0,0,0,.6);
+  --shadow: 0 8px 26px -14px rgba(0,0,0,.7);
   --on-accent: #ffffff;
   color-scheme: dark;
 }
-:root[data-theme="light"] {
-  --bg: #eef1f8;
-  --grad: radial-gradient(1000px 620px at 0% -10%, rgba(99,102,241,.16), transparent 62%),
-          radial-gradient(820px 560px at 100% 0%, rgba(20,184,166,.12), transparent 60%),
-          linear-gradient(180deg, #f3f5fb 0%, #eceff7 100%);
-  --paper: rgba(255,255,255,.62); --paper-strong: rgba(255,255,255,.85); --field: rgba(255,255,255,.75);
-  --dialog: rgba(250,251,255,.95);
-  --ink: #18203a; --ink-soft: #5b6583; --line: rgba(30,45,100,.12);
-  --mark: #4a5bdc; --mark-soft: rgba(74,91,220,.08);
-  --sky: #0f88a8; --sky-soft: rgba(15,136,168,.08);
-  --green: #138a62; --green-soft: rgba(19,138,98,.09);
-  --red: #c2416a; --red-soft: rgba(194,65,106,.07); --pink-soft: rgba(194,65,106,.05);
-  --accent: linear-gradient(120deg, #4f5fe0 0%, #2f9fd6 100%);
-  --glow: 0 8px 20px -10px rgba(60,90,220,.45);
-  --shadow: 0 14px 34px -18px rgba(30,40,90,.28), inset 0 1px 0 rgba(255,255,255,.9);
-  color-scheme: light;
-}
-/* 標題：去掉彩虹字，改純色＋小徽章 */
-header.top h1 .tt { background: none; -webkit-background-clip: initial; background-clip: initial; color: var(--ink); }
-header.top h1 .logo { border-radius: 12px; }
-/* 段落編號：低調的強調色底，不再整片漸層 */
-h2.sec .n { background: var(--mark-soft); color: var(--mark); border: 1px solid var(--line); box-shadow: none; }
-/* 錯題主因：統一中性玻璃，用編號區分，不用四種底色 */
-.causes li, .causes li:nth-child(1), .causes li:nth-child(2), .causes li:nth-child(3), .causes li:nth-child(4) { background: var(--paper); }
-.causes li .t::before { color: var(--mark); }
-/* 選項標籤：中性底＋細框；正確答案用綠色 */
-.opt { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); font-weight: 500; }
-.opt.ok { background: var(--green-soft); color: var(--green); border-color: rgba(95,212,167,.45); }
-/* 教學重點標籤 */
-.sugg .item h3 span { background: var(--mark-soft); color: var(--mark); border: 1px solid var(--line); }
-.sugg .item { background: transparent; }
-/* 區塊卡片稍微加深，與面板拉開層次 */
-.blk { background: var(--paper); }
-.panel { background: rgba(148,163,214,.04); }
-:root[data-theme="light"] .panel { background: rgba(255,255,255,.4); }
-/* 分頁：選中改為實心淺色玻璃＋強調色字，不用大片漸層 */
-.tab[aria-selected="true"] { background: var(--paper-strong); color: var(--ink); border-color: var(--mark); box-shadow: inset 0 -2px 0 var(--mark); }
-.tab[aria-selected="true"] svg, .tab[aria-selected="true"] i { color: var(--mark); }
-.tab[aria-selected="true"] .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
-/* 切換按鈕組 */
-.seg button[aria-pressed="true"], .theme-seg button[aria-pressed="true"] { background: var(--mark-soft); color: var(--ink); box-shadow: none; font-weight: 700; }
-.seg button[aria-pressed="true"] svg, .theme-seg button[aria-pressed="true"] svg { color: var(--mark); }
-/* 主要按鈕只留這一處漸層 */
-.btn.primary { background: var(--accent); }
-.sample-tag { background: var(--mark-soft); color: var(--mark); border: 1px solid var(--line); }
-.qbox { background: var(--mark-soft); border-left-color: var(--mark); }
-.kchip { background: var(--sky-soft); color: var(--ink); }
-.md strong { background: none; color: var(--ink); font-weight: 700; }
-.thinking i { background: var(--mark); }
+body { background: var(--bg); font-weight: 400; }
+.glass, .card, .panel, header.top, .tab, .model-line, .res, .toast, dialog#settings, dialog#zoomDlg { -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* 黃色提醒條＋靛藍橫幅（滿版） */
+.notice { background: var(--yellow); color: var(--yellow-ink); text-align: center; font-weight: 700; letter-spacing: .04em; padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 15px; }
+.notice svg, .notice i { margin-right: 6px; }
+.topband { background: var(--band); color: var(--band-ink);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.topband header.top { max-width: 1180px; margin: 0 auto; background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 20px 0; color: var(--band-ink); }
+.topband header.top h1 { color: var(--band-title); font-weight: 900; letter-spacing: .08em; }
+.topband header.top h1 .tt { color: var(--band-title); background: none; -webkit-background-clip: initial; background-clip: initial; }
+.topband header.top h1 .logo { background: rgba(255,255,255,.14); color: #ffffff; border: 1px solid rgba(255,255,255,.28); box-shadow: none; border-radius: 14px; }
+.topband header.top p { color: rgba(255,255,255,.88); font-weight: 500; }
+.topband header.top p.keyget { color: #ffffff; }
+.topband header.top p.keyget a { color: var(--band-title); text-decoration-color: var(--band-title); }
+.topband header.top p.keyget svg, .topband header.top p.keyget > i { color: var(--yellow); }
+.topband .theme-seg { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3); }
+.topband .theme-seg button { color: rgba(255,255,255,.85); }
+.topband .theme-seg button[aria-pressed="true"] { background: #ffffff; color: #22308f; font-weight: 700; box-shadow: none; }
+.topband .theme-seg button[aria-pressed="true"] svg { color: #22308f; }
+.topband .btn { background: rgba(255,255,255,.12); color: #ffffff; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; }
+.topband .btn:hover { background: rgba(255,255,255,.22); color: #ffffff; border-color: #ffffff; }
+.wrap { padding-block: 24px 48px; }
+
+/* 白色卡片 */
+.card, .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); }
+.label { color: var(--ink-soft); font-weight: 700; }
+.seg { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { color: var(--ink-soft); }
+.seg button[aria-pressed="true"] { background: var(--mark-soft); color: var(--mark); font-weight: 700; box-shadow: none; }
+.seg button[aria-pressed="true"] svg { color: var(--mark); }
+.drop { background: var(--field); border: 2px dashed var(--mark-line); border-radius: 16px; }
+.drop.over { background: var(--mark-soft); border-color: var(--mark); }
 .drop .drop-ic { color: var(--mark); }
-.mopt:has(input:checked) { background: var(--mark-soft); }
+textarea, select, .keyrow input, #customModel { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); }
+textarea:focus, .keyrow input:focus, #customModel:focus { border-color: var(--mark); }
+.btn { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; font-weight: 600; box-shadow: 0 1px 0 rgba(20,30,80,.04); }
+.btn:hover { background: var(--mark-soft); border-color: var(--mark-line); color: var(--mark); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border: 0; box-shadow: var(--glow); font-weight: 700; letter-spacing: .08em; }
+.btn.primary:hover { color: var(--on-accent); filter: brightness(1.08); }
+.urlrow { background: var(--field); border: 1px solid var(--line); }
+.model-line { background: var(--field); border: 1px solid var(--line); box-shadow: none; }
+.res { background: var(--yellow-soft); border: 1px solid var(--yellow-line); box-shadow: none; }
+.res svg, .res i { color: var(--orange); }
+.res a { color: var(--ink); text-decoration-color: var(--orange); }
+.status { background: var(--mark-soft); border: 1px solid var(--mark-line); color: var(--ink); }
+.status.err { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+
+/* 分頁：白色長條，選中為淡靛藍 */
+.tabs { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 8px; gap: 6px; margin-bottom: 18px; }
+.tab { flex: 1 0 auto; justify-content: center; background: transparent; border: 1px solid transparent; border-radius: 12px; color: var(--ink-soft); font-weight: 700; box-shadow: none; }
+.tab:hover { color: var(--mark); }
+.tab[aria-selected="true"] { background: var(--mark-soft); color: var(--mark); border-color: var(--mark-line); box-shadow: none; }
+.tab svg, .tab i { color: var(--mark); }
+.panel { border-top: 1px solid var(--line); background: var(--paper); }
+
+/* 段落卡片：依編號套色 */
+h2.sec { font-weight: 900; color: var(--ink); }
+.blk { border: 2px solid var(--line); background: var(--paper); border-radius: 18px; box-shadow: none; }
+.blk h2.sec .n { background: var(--mark-soft); color: var(--mark); border: 0; box-shadow: none; border-radius: 10px; }
+.blk.tone-blue   { background: var(--blue-soft);   border-color: var(--blue-line); }
+.blk.tone-green  { background: var(--green-soft);  border-color: var(--green-line); }
+.blk.tone-orange { background: var(--orange-soft); border-color: var(--orange-line); }
+.blk.tone-purple { background: var(--purple-soft); border-color: var(--purple-line); border-style: dashed; }
+.blk.tone-yellow { background: var(--yellow-soft); border-color: var(--yellow-line); }
+.blk.tone-blue h2.sec   { color: var(--blue); }   .blk.tone-blue h2.sec .n   { background: var(--blue-tag);   color: var(--blue); }
+.blk.tone-green h2.sec  { color: var(--green); }  .blk.tone-green h2.sec .n  { background: var(--green-tag);  color: var(--green); }
+.blk.tone-orange h2.sec { color: var(--orange); } .blk.tone-orange h2.sec .n { background: var(--orange-tag); color: var(--orange); }
+.blk.tone-purple h2.sec { color: var(--purple); } .blk.tone-purple h2.sec .n { background: var(--purple-tag); color: var(--purple); }
+.blk.tone-yellow h2.sec { color: var(--yellow-ink); } .blk.tone-yellow h2.sec .n { background: var(--yellow); color: var(--yellow-ink); }
+:root[data-theme="dark"] .blk.tone-yellow h2.sec { color: var(--yellow); }
+.icon-btn { background: var(--paper); border: 1px solid var(--line); color: var(--ink-soft); }
+.icon-btn:hover { background: var(--paper); color: var(--mark); border-color: var(--mark); }
+.icon-btn.done, .btn.done { color: var(--green); border-color: var(--green); }
+.qbox { background: var(--paper); border: 1px solid var(--yellow-line); border-left: 4px solid var(--yellow); border-radius: 0 12px 12px 0; }
+.qbox .q { font-weight: 700; }
+.opt { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+.opt.ok { background: var(--green-tag); color: var(--green); border-color: var(--green-line); }
+.causes li, .causes li:nth-child(1), .causes li:nth-child(2), .causes li:nth-child(3), .causes li:nth-child(4) { background: var(--paper); border: 1px solid var(--orange-line); box-shadow: none; }
+.causes li .t::before { color: var(--orange); }
+.sugg .item { background: var(--paper); border: 1px solid var(--purple-line); }
+.sugg .item h3 span { background: var(--purple-tag); color: var(--purple); border: 0; }
+.kchip { background: var(--paper); border: 1px solid var(--green-line); color: var(--ink); }
+ol.steps li::marker, ul.curr b { color: var(--mark); }
+.sample-tag { background: var(--yellow); color: var(--yellow-ink); border: 0; }
+.depth-badge { background: var(--mark-soft); color: var(--mark); border: 1px solid var(--mark-line); }
+.cnt { display: none; }
+.toolbar { border-top: 1px solid var(--line); }
+.empty .big, .thinking i { color: var(--mark); }
+.thinking i { background: var(--mark); box-shadow: none; }
+.md strong { background: none; color: var(--ink); }
+.md h2 { border-bottom: 2px solid var(--green-line); }
+.md th { background: var(--mark-soft); }
+.md th, .md td { border: 1px solid var(--line); }
+.md blockquote { border-left-color: var(--yellow); background: var(--yellow-soft); color: var(--ink); }
+dialog#settings, dialog#zoomDlg { background: var(--dialog); border: 1px solid var(--line); box-shadow: 0 24px 60px -20px rgba(20,30,80,.45); }
+dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,.45); }
+.mopt { background: var(--paper); border: 1px solid var(--line); }
+.mopt:has(input:checked) { background: var(--mark-soft); border-color: var(--mark); box-shadow: none; }
+.mopt .tg { color: var(--mark); }
+.keynote { background: var(--yellow-soft); border: 1px solid var(--yellow-line); }
+.toast { background: #1d2742; color: #ffffff; border: 0; }
+.chip.ok { background: var(--green-tag); color: var(--green); }
+.chip.no { background: var(--red-soft); color: var(--red); }
+@media (max-width: 860px) { .tab { flex: 1 0 auto; } }
 </style>
 </head>
 <body>
 
-<div class="wrap">
+<div class="notice" role="note"><i class="fa-solid fa-triangle-exclamation"></i>請尊重智慧財產，使用請引註：試題分析小幫手由優履工作室研發</div>
+<div class="topband">
   <header class="top">
     <h1><span class="logo"><i class="fa-solid fa-microscope"></i></span><span class="tt">試題分析小幫手</span></h1>
     <div class="hdr-tools">
@@ -440,6 +515,8 @@ h2.sec .n { background: var(--mark-soft); color: var(--mark); border: 1px solid 
     <p style="flex-basis:100%">上傳數學題目，找出誘答陷阱、分析錯題原因、產出教學建議與教案（優履工作室研發）</p>
     <p class="keyget"><i class="fa-solid fa-key"></i> 沒有 API Key？可以直接到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 API Key <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a></p>
   </header>
+</div>
+<div class="wrap">
 
   <div class="grid">
     <aside class="input card" aria-label="輸入試題">
@@ -930,7 +1007,7 @@ $("note").oninput = () => store("ea_note", $("note").value);
 const PROVIDERS = {
   gemini: {
     name: "Google Gemini", defaultModel: "gemini-3.1-flash-lite",
-    help: '到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener">Google AI Studio</a> 免費申請，金鑰通常以 AIza 開頭。',
+    help: '到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener">Google AI Studio</a> 免費申請，金鑰通常以 AIza 或 AQ. 開頭。',
     models: [
       { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite", tag: "最推薦預設", desc: "回應延遲極低、反應速度快且穩定，適合大部分試題分析與教案設計。" },
       { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash", tag: "最新旗艦世代", desc: "Google 最新一代多模態大模型，效能與理解力全面提升。" },
@@ -970,7 +1047,7 @@ function fillDialog() {
   document.querySelectorAll("[data-prov]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.prov === dlgProv));
   const P = PROVIDERS[dlgProv];
   $("keyInput").value = cfg.key[dlgProv] || "";
-  $("keyInput").placeholder = dlgProv === "gemini" ? "AIza…" : "sk-ant-…";
+  $("keyInput").placeholder = dlgProv === "gemini" ? "AIza… 或 AQ.…" : "sk-ant-…";
   $("keyHelp").innerHTML = P.help;
   $("customModel").value = cfg.custom[dlgProv] || "";
   $("modelList").innerHTML = P.models.map((m) => `<label class="mopt"><input type="radio" name="model" id="m-${m.id}" value="${m.id}" ${m.id === cfg.model[dlgProv] ? "checked" : ""}><div><span class="nm">${m.name}</span><span class="tg">${m.tag}</span></div><div class="ds">${m.desc}</div></label>`).join("");
@@ -997,9 +1074,14 @@ $("testKey").onclick = async () => {
   $("testKey").disabled = true;
   try {
     const m = (cfg.custom[dlgProv] || cfg.model[dlgProv]).trim();
-    const r = await callLLM({ provider: dlgProv, key: cfg.key[dlgProv], model: m, prompt: "請只回覆 OK 兩個字母。", maxTokens: 20, noFallback: true });
+    const r = await callLLM({ provider: dlgProv, key: cfg.key[dlgProv], model: m, prompt: "請只回覆 OK 兩個字母。", maxTokens: 20, noFallback: true, onStatus: (m) => { $("testOut").textContent = m; } });
     out.className = "test-out ok"; out.textContent = `連線成功！型號【${m}】回應正常。`;
-  } catch (e) { out.className = "test-out bad"; out.textContent = "測試失敗：" + (e.message || e); }
+  } catch (e) {
+    if (e.status === 503 || e.status === 500 || e.status === 504) { out.className = "test-out ok"; out.textContent = "✓ 金鑰有效，已連上 Google。\n這個型號目前使用人數太多、暫時忙碌；分析時會自動重試，並改用其他 Gemini 型號。"; }
+    else if (e.status === 429) { out.className = "test-out ok"; out.textContent = "✓ 金鑰有效，已連上 Google。\n這個型號的免費額度暫時用完了；分析時會自動改用其他 Gemini 型號，或等幾分鐘再試。"; }
+    else { out.className = "test-out bad"; out.textContent = "測試失敗：" + (e.message || e); }
+  }
+  $("testOut").scrollIntoView({ block: "nearest" });
   $("testKey").disabled = false;
 };
 $("saveSettings").onclick = () => {
@@ -1055,7 +1137,9 @@ function netError(prov) {
   ].filter(Boolean);
   const e = new Error(lines.join("\n")); e.isNet = true; return e;
 }
-async function callLLM({ provider = cfg.provider, key = activeKey(), model = activeModel(), prompt, image, json, onText, signal, maxTokens = 8000, temperature, noFallback }) {
+// Gemini 忙碌時依序改用的備用型號（皆為 Google 官方現行型號）
+const GEMINI_BACKUPS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
+async function callLLM({ provider = cfg.provider, key = activeKey(), model = activeModel(), prompt, image, json, onText, onStatus = (m) => setStatus(m), signal, maxTokens = 8000, temperature, noFallback }) {
   if (!key) { const e = new Error("尚未設定 API 金鑰"); e.noKey = true; throw e; }
   let text = "", truncated = false;
   const emit = (d) => { if (!d) return; text += d; onText?.(text); };
@@ -1077,11 +1161,20 @@ async function callLLM({ provider = cfg.provider, key = activeKey(), model = act
         catch (err2) { if (err2?.name === "AbortError") throw err2; throw netError("gemini"); }
       }
     };
-    let res = await go(model);
-    if (!res.ok && (res.status === 404 || res.status === 503) && !noFallback && model !== PROVIDERS.gemini.defaultModel) {
-      toast(`型號 ${model} 暫時無法使用，自動改用 ${PROVIDERS.gemini.defaultModel}`);
-      res = await go(PROVIDERS.gemini.defaultModel);
+    // 型號忙碌（503/500/504）或額度暫滿（429）：先等一下重試，再依序改用備用型號
+    const BUSY = [429, 500, 503, 504];
+    const wait = (ms) => new Promise((ok, no) => { const t = setTimeout(ok, ms); signal?.addEventListener("abort", () => { clearTimeout(t); no(new DOMException("aborted", "AbortError")); }, { once: true }); });
+    let used = model, res = await go(model);
+    if (!res.ok && BUSY.includes(res.status)) { onStatus?.(`${modelLabel("gemini", model)} 目前忙碌，2 秒後自動重試…`); await wait(2000); res = await go(model); if (res.ok) onStatus?.(""); }
+    if (!res.ok && !noFallback && (BUSY.includes(res.status) || res.status === 404)) {
+      for (const m of GEMINI_BACKUPS.filter((x) => x !== model)) {
+        onStatus?.(`${modelLabel("gemini", used)} 目前忙碌，自動改用 ${modelLabel("gemini", m)}…`);
+        used = m; res = await go(m);
+        if (res.ok || !(BUSY.includes(res.status) || res.status === 404)) break;
+      }
+      if (res.ok && used !== model) toast(`這次改用 ${modelLabel("gemini", used)} 完成`);
     }
+    if (res.ok && (used !== model || res.retried)) onStatus?.("");
     if (!res.ok) { const j = await res.json().catch(() => ({})); throw httpError(res.status, j?.error?.message, provider); }
     await readSSE(res, (ev) => {
       if (ev.error) { const e = httpError(ev.error.code || 500, ev.error.message); throw e; }
@@ -1141,12 +1234,12 @@ function prepImage(file) {
 function applyTheme(t) {
   const root = document.documentElement;
   const sys = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  const eff = t || "dark";
+  const eff = t || "light";
   if (t) root.setAttribute("data-theme", t);
   document.querySelectorAll("[data-theme-set]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.themeSet === eff));
 }
 document.querySelectorAll("[data-theme-set]").forEach((b) => (b.onclick = () => { store("ea_theme", b.dataset.themeSet); applyTheme(b.dataset.themeSet); }));
-applyTheme(load("ea_theme") || "dark");
+applyTheme(load("ea_theme") || "light");
 
 function currentInput() {
   const note = $("note").value.trim();
@@ -1226,7 +1319,7 @@ function renderAnalysis() {
         <button class="btn small ghost" data-act="dl"><i class="fa-solid fa-download"></i> 下載 .md</button>
       </div>
     </div>
-    ${secs.map((s, i) => `<section class="blk" aria-label="${esc(secLabel(s))}">
+    ${secs.map((s, i) => `<section class="blk tone-${({ "一": "blue", "二": "green", "三": "orange", "四": "purple" })[s.n] || (s.title === "題目與正確答案" ? "yellow" : "plain")}" aria-label="${esc(secLabel(s))}">
       <div class="blk-h">
         <h2 class="sec"><span class="n">${s.n}</span>${s.title}</h2>
         <div class="blk-tools">
