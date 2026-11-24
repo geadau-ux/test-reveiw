@@ -504,6 +504,39 @@ dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,
 .chip.ok { background: var(--green-tag); color: var(--green); }
 .chip.no { background: var(--red-soft); color: var(--red); }
 @media (max-width: 860px) { .tab { flex: 1 0 auto; } }
+
+/* Markdown 即時預覽 */
+.ed-bar { margin-bottom: 14px; }
+.tabs { flex-wrap: wrap; overflow: visible; }
+.grid.wide { grid-template-columns: minmax(0, 1fr); }
+.grid.wide aside.input { display: none; }
+.ed-bar select { width: auto; min-width: 9em; padding: 7px 10px; }
+.ed-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 1000px) { .ed-grid { grid-template-columns: minmax(0, 1fr); } }
+.ed-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ed-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-height: 38px; }
+.ed-h h3 { margin: 0; font-size: 15px; flex: 1 1 auto; min-width: 0; }
+.ed-tag { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 8px; background: var(--mark-soft); color: var(--mark); border: 1px solid var(--mark-line, var(--line)); white-space: nowrap; }
+#edSrcText { height: 62vh; min-height: 360px; resize: vertical; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.75; background: var(--field); }
+.ed-prev { height: 62vh; min-height: 360px; overflow: auto; max-width: none; padding: 16px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.ed-prev h1 { font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.btn.primary.done { color: #ffffff; background: var(--green); }
+.toast-undo { margin-left: 4px; font: inherit; font-weight: 700; background: transparent; color: inherit; border: 1px solid currentColor; border-radius: 8px; padding: 1px 8px; cursor: pointer; }
+
+/* 貼上區 */
+.pastebox { display: flex; align-items: center; gap: 10px; margin: 14px auto 2px; max-width: 360px; padding: 4px 6px 4px 14px; border: 2px solid var(--mark-line, var(--line)); border-radius: 12px; background: var(--paper); cursor: text; transition: border-color .15s, box-shadow .15s; }
+.pastebox:hover { border-color: var(--mark); }
+.pastebox { position: relative; flex-wrap: wrap; }
+.pastebox textarea { white-space: nowrap; text-overflow: ellipsis; }
+.pb-hint { order: 3; flex-basis: 100%; font-size: 12px; color: var(--ink-soft); padding: 0 0 6px 27px; margin-top: -6px; text-align: left; }
+.pastebox.loading { border-color: var(--mark); }
+.pastebox.loading textarea::placeholder { color: var(--ink-soft); }
+.pastebox.ready { border-color: var(--mark); box-shadow: 0 0 0 4px var(--mark-soft); }
+.pastebox svg, .pastebox > i { color: var(--mark); flex: none; font-size: 17px; }
+.pastebox textarea { flex: 1; min-width: 0; border: 0; background: transparent; resize: none; padding: 10px 4px; font: inherit; font-size: 14px; line-height: 1.4; height: 42px; overflow: hidden; color: var(--ink); text-align: left; }
+.pastebox textarea:focus, .pastebox textarea:focus-visible { outline: none; }
+.pastebox textarea::placeholder { color: var(--mark); opacity: .85; font-weight: 600; }
+.pastebox.ready textarea::placeholder { color: var(--green); opacity: 1; }
 </style>
 </head>
 <body>
@@ -537,12 +570,16 @@ dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,
 
       <div id="imgArea">
         <div class="drop" id="drop" tabindex="0" role="button" aria-label="選擇試題圖片">
-          <i class="fa-solid fa-cloud-arrow-up drop-ic"></i><strong>拖曳、貼上或選擇題目圖片</strong>
-          <small>支援截圖直接 Ctrl+V 貼上</small>
+          <i class="fa-solid fa-cloud-arrow-up drop-ic"></i><strong>拖曳或選擇題目圖片、.md 檔</strong>
+          <small>可以把圖片或 .md、.txt 檔直接拖進來</small>
+          <div class="pastebox" id="pasteBox">
+            <i class="fa-solid fa-paste"></i>
+            <span class="pb-hint" id="pasteHint"></span>
+            <textarea id="pasteArea" rows="1" aria-label="貼上區：點這裡後按 Ctrl+V 貼上截圖、文字或網址" placeholder="點這裡，再按 Ctrl+V 貼上截圖、文字或網址"></textarea>
+          </div>
           <div class="drop-actions">
             <button type="button" class="btn small" id="pickBtn"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button>
             <button type="button" class="btn small ghost" id="camBtn"><i class="fa-solid fa-camera"></i> 用手機拍照</button>
-            <button type="button" class="btn small ghost" id="urlBtn"><i class="fa-solid fa-link"></i> 貼上網址</button>
           </div>
         </div>
         <form class="urlrow" id="urlRow" novalidate hidden>
@@ -554,7 +591,7 @@ dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,
           </div>
           <p class="hint">在網頁的題目圖片上按右鍵，選「複製圖片網址」再貼到這裡。</p>
         </form>
-        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif,.md,.markdown,.txt,text/plain,text/markdown" hidden>
         <input type="file" id="cam" accept="image/*" capture="environment" hidden>
         <div class="preview" id="preview" hidden>
           <img id="previewImg" alt="試題圖片預覽">
@@ -944,24 +981,79 @@ function takeFile(f) {
   }).catch((e) => toast(e.message));
   setMode("img");
 }
+// ---------- 貼上區與文字檔 ----------
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const PASTE_KEY = isMac ? "⌘+V" : "Ctrl+V";
+const PASTE_IDLE = `點這裡貼上（${PASTE_KEY}）`;
+const PASTE_HINT = "截圖、文字、圖片網址";
+const PASTE_READY = `已就緒，請按 ${PASTE_KEY}`;
+function isTextFile(f) { return !!f && (/\.(md|markdown|txt)$/i.test(f.name || "") || /^text\/(plain|markdown|x-markdown)/.test(f.type || "")); }
+function putText(t, name) {
+  t = tidyMath(String(t || "")).replace(/\r\n?/g, "\n").trim();
+  if (!t) { toast("內容是空的"); return; }
+  setMode("text"); $("qtext").value = t; store("ea_text", t);
+  toast(name ? `已讀入「${name}」，放在「題目文字」` : "已貼上文字，放在「題目文字」");
+  $("qtext").focus(); $("qtext").setSelectionRange(0, 0); $("qtext").scrollTop = 0;
+}
+function takeTextFile(f) {
+  const r = new FileReader();
+  r.onload = () => putText(String(r.result), f.name);
+  r.onerror = () => toast("讀取檔案失敗");
+  r.readAsText(f, "utf-8");
+}
+function takeAny(f) {
+  if (!f) return;
+  if (isTextFile(f)) return takeTextFile(f);
+  if ((f.type || "").startsWith("image/")) return takeFile(f);
+  toast("只支援圖片、.md 或 .txt 檔");
+}
+const pa = $("pasteArea"); pa.placeholder = PASTE_IDLE; $("pasteHint").textContent = PASTE_HINT;
+["click", "keydown", "mousedown"].forEach((ev) => pa.addEventListener(ev, (e) => e.stopPropagation()));
+pa.addEventListener("focus", () => { pa.placeholder = PASTE_READY; $("pasteBox").classList.add("ready"); });
+pa.addEventListener("blur", () => { pa.placeholder = PASTE_IDLE; $("pasteBox").classList.remove("ready"); });
+pa.addEventListener("paste", (e) => {
+  e.preventDefault(); e.stopPropagation();
+  const cd = e.clipboardData; if (!cd) return;
+  const f = [...(cd.files || [])][0] || [...(cd.items || [])].find((i) => i.kind === "file")?.getAsFile();
+  if (f) { takeAny(f); pa.blur(); return; }
+  const t = (cd.getData("text/plain") || "").trim();
+  if (!t) { toast("剪貼簿裡沒有可以貼上的內容"); return; }
+  if (/^https?:\/\/\S+$/i.test(t) && typeof loadUrl === "function") { pasteUrl(t); return; }
+  putText(t);
+});
+// 手機用長按選單貼上時，內容會直接進到框裡
+async function pasteUrl(u) {
+  if (typeof loadUrl !== "function") { putText(u); return; }
+  const box = $("pasteBox"); box.classList.add("loading"); pa.value = ""; pa.placeholder = "正在載入圖片…"; pa.blur();
+  await loadUrl(u);
+  box.classList.remove("loading"); pa.placeholder = PASTE_IDLE;
+}
+function submitPaste(v) {
+  v = String(v || "").trim(); pa.value = "";
+  if (!v) return;
+  if (/^https?:\/\/\S+$/i.test(v)) pasteUrl(v); else putText(v);
+}
+pa.addEventListener("input", (e) => { if (/^insertFrom(Paste|Drop)|insertReplacementText/.test(e.inputType || "")) submitPaste(pa.value); });
+pa.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitPaste(pa.value); } });
+
 $("pickBtn").onclick = (e) => { e.stopPropagation(); $("file").click(); };
 $("camBtn").onclick = (e) => { e.stopPropagation(); $("cam").click(); };
 $("drop").onclick = () => $("file").click();
 $("drop").onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
-$("file").onchange = (e) => { takeFile(e.target.files[0]); e.target.value = ""; };
+$("file").onchange = (e) => { takeAny(e.target.files[0]); e.target.value = ""; };
 $("cam").onchange = (e) => { takeFile(e.target.files[0]); e.target.value = ""; };
 $("clearImg").onclick = () => { state.imageFile = null; $("preview").hidden = true; $("drop").hidden = false; $("previewImg").removeAttribute("src"); };
 const drop = $("drop");
 ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
 ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
 drop.addEventListener("drop", (e) => {
-  if (e.dataTransfer.files[0]) return takeFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer.files[0]) return takeAny(e.dataTransfer.files[0]);
   const u = (e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain") || "").split("\n").find((x) => /^https?:\/\//i.test(x.trim()));
   if (u) loadUrl(u.trim()); else toast("請拖曳圖片檔或圖片");
 });
 
 // ---------- 從網址載入圖片 ----------
-$("urlBtn").onclick = (e) => { e.stopPropagation(); $("urlRow").hidden = false; $("urlInput").focus(); };
+
 $("urlCancel").onclick = () => { $("urlRow").hidden = true; $("urlInput").value = ""; };
 $("urlRow").onsubmit = (e) => { e.preventDefault(); loadUrl($("urlInput").value.trim()); };
 // 貼上網址後自動載入，不必再按「載入」
@@ -1265,8 +1357,8 @@ function currentInput() {
 }
 
 // ---------- 分頁 ----------
-const TAB_ICONS = { analysis: "fa-magnifying-glass-chart", similar: "fa-clone", remedial: "fa-hand-holding-heart", polya: "fa-route", conj: "fa-lightbulb" };
-const TABS = [["analysis", "試題分析"], ["similar", "類似題"], ["remedial", "補救教學"], ["polya", "Polya 教案"], ["conj", "臆測教案"]];
+const TAB_ICONS = { analysis: "fa-magnifying-glass-chart", similar: "fa-clone", remedial: "fa-hand-holding-heart", polya: "fa-route", conj: "fa-lightbulb", editor: "fa-pen-to-square" };
+const TABS = [["analysis", "試題分析"], ["similar", "類似題"], ["remedial", "補救教學"], ["polya", "Polya 教案"], ["conj", "臆測教案"], ["editor", "Markdown 預覽"]];
 function renderTabs() {
   $("tabs").innerHTML = TABS.map(([k, l]) => {
     const done = k === "analysis" ? !!state.analysis : !!state.md[k];
@@ -1328,6 +1420,7 @@ function renderAnalysis() {
       <div>${state.isExample ? `<span class="sample-tag">範例</span><span class="hint">上傳你的題目後按「開始分析」，就會換成你的題目。</span>` : `<span class="depth-badge" style="margin:0">分析深度：${dname}</span>`}</div>
       <div class="row">
         <button class="btn small" data-act="copyall"><i class="fa-regular fa-copy"></i> 複製全部分析</button>
+        <button class="btn small ghost" data-act="toeditor"><i class="fa-solid fa-pen-to-square"></i> 編輯 Markdown</button>
         <button class="btn small ghost" data-act="dl"><i class="fa-solid fa-download"></i> 下載 .md</button>
       </div>
     </div>
@@ -1368,6 +1461,7 @@ function renderFeature(k) {
   return `<div class="md" id="mdOut">${mdHtml(md)}</div>
     <div class="toolbar">
       <button class="btn small ghost" data-act="zoom"><i class="fa-solid fa-magnifying-glass-plus"></i> 放大檢視</button>
+      <button class="btn small ghost" data-act="toeditor"><i class="fa-solid fa-pen-to-square"></i> 編輯 Markdown</button>
       <button class="btn small ghost" data-act="copy"><i class="fa-regular fa-copy"></i> 複製文字</button>
       <button class="btn small ghost" data-act="dl"><i class="fa-solid fa-download"></i> 下載 .md</button>
       <button class="btn small" data-gen="${k}" data-fresh="1"><i class="fa-solid fa-rotate-right"></i> 重新產生</button>
@@ -1377,7 +1471,10 @@ function renderFeature(k) {
 function render() {
   renderTabs();
   const p = $("panel");
-  p.innerHTML = state.tab === "analysis" ? renderAnalysis() : renderFeature(state.tab);
+  p.innerHTML = state.tab === "analysis" ? renderAnalysis() : state.tab === "editor" ? renderEditor() : renderFeature(state.tab);
+  document.querySelector(".grid").classList.toggle("wide", state.tab === "editor");
+  if (state.tab === "editor") bindEditor();
+  p.querySelectorAll("[data-act=toeditor]").forEach((b) => (b.onclick = openInEditor));
   p.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { state.tab = b.dataset.go; render(); if (!state.md[b.dataset.go]) generate(b.dataset.go); }));
   p.querySelectorAll("[data-gen]").forEach((b) => (b.onclick = () => generate(b.dataset.gen, !!b.dataset.fresh)));
   p.querySelectorAll("[data-act=copy], [data-act=copyall]").forEach((b) => (b.onclick = copyCurrent));
@@ -1388,6 +1485,115 @@ function render() {
   const stop = $("stopBtn"); if (stop) stop.onclick = () => state.ctl?.abort();
   $("analyzeBtn").disabled = !!state.busy;
   $("analyzeBtn").innerHTML = state.busy === "analysis" ? '<i class="fa-solid fa-spinner fa-spin"></i> 分析中…' : '<i class="fa-solid fa-wand-magic-sparkles"></i> 開始分析';
+}
+
+// ---------- Markdown 即時預覽 ----------
+state.editor = load("ea_editor") || "";
+const EDIT_SOURCES = () => [
+  ["analysis", "試題分析", state.analysis ? analysisMd(state.analysis) : ""],
+  ...Object.entries(FEATURES).map(([k, f]) => [k, f.label, state.md[k] || ""]),
+].filter(([, , md]) => md);
+function fixMd(src) {
+  let s = tidyMath(String(src || "")).replace(/\r\n?/g, "\n").replace(/ /g, " ");
+  const lines = s.split("\n").map((l) => l.replace(/[ \t]+$/g, "").replace(/^(\s*)[・•●▪◦]\s*/, "$1- "));
+  const isBlock = (l) => /^\s*(#{1,6}\s|[-*+]\s|\d+[.)、]\s?|>|\||```|---|\*\*\[)/.test(l) || l.trim() === "";
+  const endsSentence = (l) => /[。！？：；」』）)\].!?:;|]$/.test(l.trim());
+  const out = [];
+  for (const l of lines) {
+    const prev = out[out.length - 1];
+    // 一般段落被硬斷行：上一行不是句尾、這一行也不是標題或清單 → 接回去
+    if (prev !== undefined && prev.trim() && !isBlock(l) && !/^\s*(#{1,6}\s|```|\|)/.test(prev) && !endsSentence(prev)) {
+      out[out.length - 1] = prev + (/[A-Za-z0-9]$/.test(prev) && /^[A-Za-z0-9]/.test(l.trim()) ? " " : "") + l.trim();
+      continue;
+    }
+    // 標題、表格、清單前補空行
+    if (prev !== undefined && prev.trim() && (/^#{1,6}\s/.test(l) || (/^\|/.test(l) && !/^\|/.test(prev)) || (/^\s*([-*+]\s|\d+[.)]\s)/.test(l) && !/^\s*([-*+]\s|\d+[.)]\s)/.test(prev) && !/^\s{2,}/.test(l)))) out.push("");
+    out.push(l.replace(/^(#{1,6})([^#\s])/, "$1 $2"));
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
+function renderEditor() {
+  const srcs = EDIT_SOURCES();
+  return `
+    <div class="ed-bar">
+      <div class="row">
+        <select id="edSrc" aria-label="選擇要載入的內容">${srcs.length ? srcs.map(([k, l]) => `<option value="${k}">${l}</option>`).join("") : '<option value="">（目前還沒有結果）</option>'}</select>
+        <button class="btn small" id="edLoad" ${srcs.length ? "" : "disabled"}><i class="fa-solid fa-file-import"></i> 載入結果</button>
+        <button class="btn small" id="edFix"><i class="fa-solid fa-wand-magic-sparkles"></i> 一鍵修復斷行與公式</button>
+        <button class="btn small ghost" id="edDl"><i class="fa-solid fa-download"></i> 下載 .md</button>
+        <button class="btn small ghost" id="edCopyMd"><i class="fa-brands fa-markdown"></i> 複製 Markdown</button>
+      </div>
+    </div>
+    <div class="ed-grid">
+      <section class="ed-col">
+        <div class="ed-h"><span class="ed-tag">原始碼</span><h3>Markdown 原始碼</h3>
+          <button class="btn small ghost" id="edClear"><i class="fa-solid fa-broom"></i> 清空</button></div>
+        <textarea id="edSrcText" spellcheck="false" placeholder="在這裡貼上或輸入 Markdown，右邊會即時顯示排版結果。&#10;&#10;也可以用上方「載入結果」把試題分析或教案帶進來修改。">${esc(state.editor)}</textarea>
+      </section>
+      <section class="ed-col">
+        <div class="ed-h"><span class="ed-tag">預覽</span><h3>即時預覽</h3>
+          <div class="row">
+            <button class="btn small" id="edCopyText"><i class="fa-regular fa-copy"></i> 複製文字</button>
+            <button class="btn small primary" id="edCopyRich"><i class="fa-solid fa-file-word"></i> 複製到 Word（含格式）</button>
+          </div></div>
+        <div class="ed-prev md" id="edPrev"></div>
+      </section>
+    </div>`;
+}
+function bindEditor() {
+  const ta = $("edSrcText"), pv = $("edPrev");
+  let t = null;
+  const draw = () => { pv.innerHTML = state.editor.trim() ? mdHtml(state.editor) : '<p class="hint">左邊輸入內容後，這裡會即時顯示排版結果。</p>'; };
+  draw();
+  ta.addEventListener("input", () => { state.editor = ta.value; clearTimeout(t); t = setTimeout(() => { draw(); store("ea_editor", state.editor); }, 120); });
+  // 左右同步捲動
+  ta.addEventListener("scroll", () => { const r = ta.scrollTop / Math.max(1, ta.scrollHeight - ta.clientHeight); pv.scrollTop = r * (pv.scrollHeight - pv.clientHeight); });
+  const setText = (v) => { state.editor = v; ta.value = v; store("ea_editor", v); draw(); };
+  $("edLoad").onclick = () => { const k = $("edSrc").value; const hit = EDIT_SOURCES().find(([x]) => x === k); if (hit) { setText(tidyMath(hit[2])); toast(`已載入「${hit[1]}」`); } };
+  $("edFix").onclick = () => { if (!state.editor.trim()) return toast("左邊還沒有內容"); setText(fixMd(state.editor)); toast("已修復斷行與數學符號"); };
+  $("edClear").onclick = () => { if (!state.editor.trim()) return; const old = state.editor; setText(""); toastUndo("已清空內容", () => setText(old)); };
+  $("edCopyMd").onclick = (e) => copyText(state.editor, e.currentTarget, "Markdown");
+  $("edCopyText").onclick = (e) => copyText(pv.innerText.trim(), e.currentTarget, "預覽文字");
+  $("edCopyRich").onclick = (e) => copyRich(pv, e.currentTarget);
+  $("edDl").onclick = () => {
+    const d = new Date(); const ds = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    const url = URL.createObjectURL(new Blob([state.editor], { type: "text/markdown;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = `試題分析小幫手_${ds}.md`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+}
+// 複製含格式內容（貼到 Word、Google 文件會保留標題、粗體、表格）
+async function copyRich(el, btn) {
+  const css = "font-family:'Microsoft JhengHei','PingFang TC',sans-serif;line-height:1.7;";
+  const html = `<div style="${css}">${el.innerHTML.replace(/<div class="tw">|<\/div>(?=\s*<)/g, (m) => (m.startsWith("<div") ? "" : m))}</div>`;
+  const text = el.innerText.trim();
+  let ok = false;
+  try {
+    if (window.ClipboardItem && navigator.clipboard?.write) {
+      await navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([html], { type: "text/html" }), "text/plain": new Blob([text], { type: "text/plain" }) })]);
+      ok = true;
+    }
+  } catch (e) { ok = false; }
+  if (!ok) {
+    const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+  }
+  if (ok) {
+    toast("已複製含格式內容，可直接貼到 Word 或 Google 文件");
+    if (btn) { const old = btn.innerHTML; btn.classList.add("done"); btn.innerHTML = '<i class="fa-solid fa-check"></i> 已複製'; setTimeout(() => { btn.classList.remove("done"); btn.innerHTML = old; }, 1500); }
+  } else toast("瀏覽器不允許自動複製，請在預覽區選取文字後按 Ctrl+C");
+}
+function toastUndo(msg, undo) {
+  const t = $("toast"); t.innerHTML = ""; t.append(msg + "　");
+  const b = document.createElement("button"); b.type = "button"; b.className = "toast-undo"; b.textContent = "復原";
+  b.onclick = () => { undo(); t.hidden = true; }; t.append(b); t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 5000);
+}
+function openInEditor() {
+  const md = state.tab === "analysis" ? analysisMd(state.analysis) : state.md[state.tab];
+  if (!md) return;
+  state.editor = tidyMath(md); store("ea_editor", state.editor); state.tab = "editor"; render();
+  toast("已帶入 Markdown 預覽，可以直接修改");
 }
 
 // ---------- 匯出 ----------
