@@ -557,6 +557,15 @@ details.more > summary::-webkit-details-marker { display: none; }
 .sim-ans[open] > summary { background: var(--mark-soft); }
 .sim-ans-b { margin-top: 10px; }
 .sim-ans-b p { margin: 0 0 6px; }
+
+.ed-sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 4px; }
+.ed-tip { margin: 8px 0 0; }
+.ed-prev[contenteditable="true"] { cursor: text; outline: none; transition: border-color .15s, box-shadow .15s; }
+.ed-prev[contenteditable="true"]:hover { border-color: var(--mark-line, var(--line)); }
+.ed-prev[contenteditable="true"]:focus { border-color: var(--mark); box-shadow: 0 0 0 3px var(--mark-soft); }
+.ed-prev:empty::before { content: "左邊輸入內容後，這裡會即時顯示排版結果；也可以直接在這裡打字。"; color: var(--ink-soft); }
+#edSrcText:focus { box-shadow: 0 0 0 3px var(--mark-soft); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -1557,39 +1566,140 @@ function renderEditor() {
         <select id="edSrc" aria-label="選擇要載入的內容">${srcs.length ? srcs.map(([k, l]) => `<option value="${k}">${l}</option>`).join("") : '<option value="">（目前還沒有結果）</option>'}</select>
         <button class="btn small" id="edLoad" ${srcs.length ? "" : "disabled"}><i class="fa-solid fa-file-import"></i> 載入結果</button>
         <button class="btn small" id="edFix"><i class="fa-solid fa-wand-magic-sparkles"></i> 一鍵修復斷行與公式</button>
+        <span class="ed-sep" aria-hidden="true"></span>
+        <button class="btn small" id="edUndo" title="回到上一步（可連續按）"><i class="fa-solid fa-rotate-left"></i> 還原</button>
+        <button class="btn small" id="edRedo" title="取消剛才的還原"><i class="fa-solid fa-rotate-right"></i> 重做</button>
+        <button class="btn small" id="edRevert" title="回到剛載入時的內容"><i class="fa-solid fa-clock-rotate-left"></i> 還原全部</button>
         <button class="btn small ghost" id="edDl"><i class="fa-solid fa-download"></i> 下載 .md</button>
-        <button class="btn small ghost" id="edCopyMd"><i class="fa-brands fa-markdown"></i> 複製 Markdown</button>
       </div>
+      <p class="hint ed-tip">左右兩邊都可以直接修改，另一邊會即時更新。右邊選取文字後按 ${isMac ? "⌘" : "Ctrl"}+B 可以變粗體。</p>
     </div>
     <div class="ed-grid">
       <section class="ed-col">
         <div class="ed-h"><span class="ed-tag">原始碼</span><h3>Markdown 原始碼</h3>
-          <button class="btn small ghost" id="edClear"><i class="fa-solid fa-broom"></i> 清空</button></div>
+          <div class="row">
+            <button class="btn small ghost" id="edCopyMd"><i class="fa-regular fa-copy"></i> 複製原始碼</button>
+            <button class="btn small ghost" id="edClear"><i class="fa-solid fa-broom"></i> 清空</button>
+          </div></div>
         <textarea id="edSrcText" spellcheck="false" placeholder="在這裡貼上或輸入 Markdown，右邊會即時顯示排版結果。&#10;&#10;也可以用上方「載入結果」把試題分析或教案帶進來修改。">${esc(state.editor)}</textarea>
       </section>
       <section class="ed-col">
-        <div class="ed-h"><span class="ed-tag">預覽</span><h3>即時預覽</h3>
+        <div class="ed-h"><span class="ed-tag">排版</span><h3>即時預覽（可編輯）</h3>
           <div class="row">
-            <button class="btn small" id="edCopyText"><i class="fa-regular fa-copy"></i> 複製文字</button>
-            <button class="btn small primary" id="edCopyRich"><i class="fa-solid fa-file-word"></i> 複製到 Word（含格式）</button>
+            <button class="btn small ghost" id="edCopyText"><i class="fa-regular fa-copy"></i> 複製文字</button>
+            <button class="btn small primary" id="edCopyRich" title="連同標題、粗體、表格一起複製，可直接貼到 Word 或 Google 文件"><i class="fa-solid fa-file-word"></i> 複製到 Word</button>
           </div></div>
-        <div class="ed-prev md" id="edPrev"></div>
+        <div class="ed-prev md" id="edPrev" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="排版預覽，可直接編輯"></div>
       </section>
     </div>`;
 }
+
+// 排版畫面（HTML）轉回 Markdown
+function domToMd(root) {
+  const inline = (n) => {
+    if (n.nodeType === 3) return n.nodeValue.replace(/[ \t\r\n]+/g, " ");
+    if (n.nodeType !== 1) return "";
+    const t = n.tagName, c = [...n.childNodes].map(inline).join("");
+    if (t === "BR") return "\n";
+    if (t === "STRONG" || t === "B") return c.trim() ? `**${c.trim()}**` : c;
+    if (t === "EM" || t === "I") return c.trim() ? `*${c.trim()}*` : c;
+    if (t === "DEL" || t === "S") return c.trim() ? `~~${c.trim()}~~` : c;
+    if (t === "CODE") return "`" + c + "`";
+    if (t === "A") return n.getAttribute("href") ? `[${c}](${n.getAttribute("href")})` : c;
+    if (t === "SPAN" && /font-weight:\s*(bold|[6-9]00)/.test(n.getAttribute("style") || "")) return c.trim() ? `**${c.trim()}**` : c;
+    return c;
+  };
+  const BLOCK = /^(P|DIV|H[1-6]|UL|OL|LI|TABLE|THEAD|TBODY|TR|BLOCKQUOTE|PRE|HR|SECTION)$/;
+  const hasBlock = (n) => [...n.children].some((x) => BLOCK.test(x.tagName));
+  const clean = (s) => s.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const list = (el, depth) => {
+    const ordered = el.tagName === "OL"; let i = Number(el.getAttribute("start") || 1);
+    return [...el.children].filter((x) => x.tagName === "LI").map((li) => {
+      const pad = "   ".repeat(depth), mark = ordered ? `${i++}. ` : "- ";
+      const own = [...li.childNodes].filter((x) => !(x.nodeType === 1 && /^(UL|OL)$/.test(x.tagName)));
+      const text = clean(own.map((x) => (x.nodeType === 1 && /^(P|DIV)$/.test(x.tagName) ? inline(x) + "\n" : inline(x))).join("")).replace(/\n/g, "\n" + pad + "   ");
+      const subs = [...li.children].filter((x) => /^(UL|OL)$/.test(x.tagName)).map((x) => list(x, depth + 1)).join("\n");
+      return pad + mark + text + (subs ? "\n" + subs : "");
+    }).join("\n");
+  };
+  const table = (el) => {
+    const rows = [...el.querySelectorAll("tr")].map((tr) => [...tr.children].map((td) => clean(inline(td)).replace(/\n/g, " ").replace(/\|/g, "\\|")));
+    if (!rows.length) return "";
+    const w = Math.max(...rows.map((r) => r.length));
+    const line = (r) => "| " + Array.from({ length: w }, (_, i) => r[i] || "").join(" | ") + " |";
+    return [line(rows[0]), "| " + Array(w).fill("---").join(" | ") + " |", ...rows.slice(1).map(line)].join("\n");
+  };
+  const blocks = (el) => {
+    const out = []; let buf = "";
+    const flush = () => { if (buf.trim()) out.push(clean(buf)); buf = ""; };
+    for (const n of el.childNodes) {
+      if (n.nodeType === 3) { buf += n.nodeValue; continue; }
+      if (n.nodeType !== 1) continue;
+      const t = n.tagName;
+      if (!BLOCK.test(t)) { if (t === "BR") { flush(); } else buf += inline(n); continue; }
+      flush();
+      if (/^H[1-6]$/.test(t)) { const s = clean(inline(n)); if (s) out.push("#".repeat(+t[1]) + " " + s); }
+      else if (t === "UL" || t === "OL") out.push(list(n, 0));
+      else if (t === "TABLE") out.push(table(n));
+      else if (t === "HR") out.push("---");
+      else if (t === "PRE") out.push("```\n" + n.textContent.replace(/\n$/, "") + "\n```");
+      else if (t === "BLOCKQUOTE") out.push(blocks(n).split("\n").map((l) => "> " + l).join("\n"));
+      else if ((t === "DIV" || t === "SECTION") && hasBlock(n)) { const s = blocks(n); if (s) out.push(s); }
+      else { const s = clean(inline(n)); if (s) out.push(s); }
+    }
+    flush();
+    return out.filter(Boolean).join("\n\n");
+  };
+  return blocks(root) + "\n";
+}
+
 function bindEditor() {
   const ta = $("edSrcText"), pv = $("edPrev");
-  let t = null;
-  const draw = () => { pv.innerHTML = state.editor.trim() ? mdHtml(state.editor) : '<p class="hint">左邊輸入內容後，這裡會即時顯示排版結果。</p>'; };
-  draw();
-  ta.addEventListener("input", () => { state.editor = ta.value; clearTimeout(t); t = setTimeout(() => { draw(); store("ea_editor", state.editor); }, 120); });
-  // 左右同步捲動
-  ta.addEventListener("scroll", () => { const r = ta.scrollTop / Math.max(1, ta.scrollHeight - ta.clientHeight); pv.scrollTop = r * (pv.scrollHeight - pv.clientHeight); });
-  const setText = (v) => { state.editor = v; ta.value = v; store("ea_editor", v); draw(); };
-  $("edLoad").onclick = () => { const k = $("edSrc").value; const hit = EDIT_SOURCES().find(([x]) => x === k); if (hit) { setText(tidyMath(hit[2])); toast(`已載入「${hit[1]}」`); } };
-  $("edFix").onclick = () => { if (!state.editor.trim()) return toast("左邊還沒有內容"); setText(fixMd(state.editor)); toast("已修復斷行與數學符號"); };
-  $("edClear").onclick = () => { if (!state.editor.trim()) return; const old = state.editor; setText(""); toastUndo("已清空內容", () => setText(old)); };
-  $("edCopyMd").onclick = (e) => copyText(state.editor, e.currentTarget, "Markdown");
+  const H = (state.edHist ||= { undo: [], redo: [], last: state.editor });
+  if (state.edBase == null) state.edBase = state.editor;
+  try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {}
+  const draw = () => { pv.innerHTML = state.editor.trim() ? mdHtml(state.editor) : ""; };
+  const save = () => store("ea_editor", state.editor);
+  const updBtns = () => {
+    $("edUndo").disabled = !H.undo.length && H.last === state.editor;
+    $("edRedo").disabled = !H.redo.length;
+    $("edRevert").disabled = state.editor === state.edBase;
+  };
+  // 每次修改停頓約半秒記一筆歷史
+  let snapT = null;
+  const snapshot = () => { clearTimeout(snapT); if (state.editor !== H.last) { H.undo.push(H.last); if (H.undo.length > 200) H.undo.shift(); H.last = state.editor; H.redo = []; } updBtns(); };
+  const touched = () => { clearTimeout(snapT); snapT = setTimeout(snapshot, 500); updBtns(); };
+  const setAll = (v, record = true) => {
+    if (record) snapshot();
+    state.editor = v; ta.value = v; draw(); save();
+    if (record) snapshot(); else H.last = v;
+    updBtns();
+  };
+  draw(); updBtns();
+
+  // 左邊打字 → 右邊即時更新
+  let t1 = null;
+  ta.addEventListener("input", () => { state.editor = ta.value; clearTimeout(t1); t1 = setTimeout(() => { draw(); save(); }, 120); touched(); });
+  // 右邊打字 → 左邊原始碼即時更新（不重畫右邊，游標不會跳）
+  let t2 = null;
+  pv.addEventListener("input", () => { clearTimeout(t2); t2 = setTimeout(() => { state.editor = domToMd(pv); ta.value = state.editor; save(); touched(); }, 150); });
+  pv.addEventListener("blur", () => { clearTimeout(t2); const md = domToMd(pv); if (md !== state.editor) { state.editor = md; ta.value = md; save(); } snapshot(); draw(); });
+  // 右邊貼上一律用純文字，避免帶進怪格式
+  pv.addEventListener("paste", (e) => { e.preventDefault(); const t = e.clipboardData?.getData("text/plain") || ""; document.execCommand("insertText", false, t); });
+  // 左邊捲動時右邊跟著捲
+  ta.addEventListener("scroll", () => { if (document.activeElement === pv) return; const r = ta.scrollTop / Math.max(1, ta.scrollHeight - ta.clientHeight); pv.scrollTop = r * (pv.scrollHeight - pv.clientHeight); });
+
+  $("edUndo").onclick = () => {
+    clearTimeout(t2); if (document.activeElement === pv) { state.editor = domToMd(pv); }
+    snapshot(); if (!H.undo.length) return;
+    H.redo.push(state.editor); const v = H.undo.pop(); setAll(v, false); toast("已還原上一步");
+  };
+  $("edRedo").onclick = () => { if (!H.redo.length) return; H.undo.push(state.editor); const v = H.redo.pop(); setAll(v, false); toast("已重做"); };
+  $("edRevert").onclick = () => { if (state.editor === state.edBase) return; setAll(state.edBase); toast("已還原全部，回到剛載入時的內容；按「還原」可以反悔"); };
+  $("edLoad").onclick = () => { const k = $("edSrc").value; const hit = EDIT_SOURCES().find(([x]) => x === k); if (!hit) return; const v = tidyMath(hit[2]); setAll(v); state.edBase = v; updBtns(); toast(`已載入「${hit[1]}」`); };
+  $("edFix").onclick = () => { if (!state.editor.trim()) return toast("左邊還沒有內容"); setAll(fixMd(state.editor)); toast("已修復斷行與數學符號；按「還原」可以反悔"); };
+  $("edClear").onclick = () => { if (!state.editor.trim()) return; setAll(""); toast("已清空；按「還原」可以救回"); };
+  $("edCopyMd").onclick = (e) => copyText(state.editor, e.currentTarget, "Markdown 原始碼");
   $("edCopyText").onclick = (e) => copyText(pv.innerText.trim(), e.currentTarget, "預覽文字");
   $("edCopyRich").onclick = (e) => copyRich(pv, e.currentTarget);
   $("edDl").onclick = () => {
@@ -1598,6 +1708,7 @@ function bindEditor() {
     const a = document.createElement("a"); a.href = url; a.download = `試題分析小幫手_${ds}.md`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 }
+
 // 複製含格式內容（貼到 Word、Google 文件會保留標題、粗體、表格）
 async function copyRich(el, btn) {
   const css = "font-family:'Microsoft JhengHei','PingFang TC',sans-serif;line-height:1.7;";
@@ -1629,7 +1740,7 @@ function toastUndo(msg, undo) {
 function openInEditor() {
   const md = state.tab === "analysis" ? analysisMd(state.analysis) : state.md[state.tab];
   if (!md) return;
-  state.editor = tidyMath(md); store("ea_editor", state.editor); state.tab = "editor"; render();
+  state.editor = tidyMath(md); state.edBase = state.editor; state.edHist = null; store("ea_editor", state.editor); state.tab = "editor"; render();
   toast("已帶入 Markdown 預覽，可以直接修改");
 }
 
