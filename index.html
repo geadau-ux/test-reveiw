@@ -892,6 +892,8 @@ dialog#shareDlg::backdrop { background: rgba(20,28,70,.5); }
 .topband .btn.share-btn { background: #ffffff; color: #22308f; border-color: #ffffff; font-weight: 800; }
 .topband .btn.share-btn svg, .topband .btn.share-btn i { color: #22308f; }
 .topband .btn.share-btn:hover { background: #ffe7a1; color: #22308f; }
+.vcard.claude.org { background: var(--field); border-style: dashed; }
+.vcard.claude.org .btn.vc-go { padding: 5px 12px; font-size: 13.5px; }
 </style>
 </head>
 <body>
@@ -915,15 +917,15 @@ dialog#shareDlg::backdrop { background: rgba(20,28,70,.5); }
     <div class="vs-label">版本選擇</div>
     <div class="vcard key cur">
       <span class="vtag">你正在用</span>
-      <b><i class="fa-solid fa-key"></i> 金鑰版</b>
-      <span>要用自己的 Gemini 金鑰。還沒有的話，到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>，再按右上「API 金鑰／型號」貼上。</span>
+      <b><i class="fa-solid fa-key"></i> 金鑰版（推薦給所有老師）</b>
+      <span>手機、電腦都能用。只要一把免費的 Gemini 金鑰：到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>，再按右上「API 金鑰／型號」貼上，只要設定一次。</span>
     </div>
-    <div class="vcard claude">
+    <div class="vcard claude org">
       <div class="vc-head">
-        <b><i class="fa-solid fa-star"></i> Claude 免金鑰版（推薦）</b>
-        <a class="btn small vc-go" href="https://claude.ai/artifact/TPhniT7wNiLfpGERFfE23f" target="_blank" rel="noopener noreferrer" title="在新分頁開啟 Claude 免金鑰版">改用我 <i class="fa-solid fa-arrow-right"></i></a>
+        <b><i class="fa-solid fa-building-columns"></i> Claude 免金鑰版（限組織成員）</b>
+        <a class="btn small vc-go" href="https://claude.ai/artifact/TPhniT7wNiLfpGERFfE23f" target="_blank" rel="noopener noreferrer" title="限發布者所屬組織的成員使用">組織成員請點 <i class="fa-solid fa-arrow-right"></i></a>
       </div>
-      <span>登入 Claude 帳號就能直接用，手機也行，不用申請任何金鑰。沒有帳號的話，打開後依畫面指示免費註冊即可（免費帳號也能用）。</span>
+      <span>只有和發布者<b>同一個組織</b>、並<b>登入組織帳號</b>的成員才能使用。個人的 Claude 帳號（包含免費帳號）無法使用，請用左邊的金鑰版。</span>
     </div>
   </div>
 </div>
