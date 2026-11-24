@@ -868,6 +868,13 @@ textarea, select, .keyrow input, #customModel { font-size: 15.5px; }
 .qf-b .qf-text { line-height: 1.8; }
 .qf-tools span { min-width: 4.6em; font-size: 12.5px; }
 .qf-h { cursor: move; }
+.vc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.vc-head b { min-width: 0; }
+.vcard .btn.vc-go { align-self: center; margin-top: 0; flex: none; background: var(--mark); border-color: var(--mark); color: #ffffff; font-weight: 800; border-radius: 999px; padding: 6px 16px; box-shadow: 0 6px 14px -8px var(--mark); }
+.vcard .btn.vc-go svg, .vcard .btn.vc-go i { color: #ffffff; }
+.vcard .btn.vc-go:hover { filter: brightness(1.1); background: var(--mark); color: #ffffff; }
+:root[data-theme="dark"] .vcard .btn.vc-go { background: #3d51c7; border-color: #3d51c7; }
+.vcard a.btn.vc-go, .vcard a.btn.vc-go:hover { text-decoration: none; }
 </style>
 </head>
 <body>
@@ -894,9 +901,11 @@ textarea, select, .keyrow input, #customModel { font-size: 15.5px; }
       <span>要用自己的 Gemini 金鑰。還沒有的話，到 <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noopener noreferrer">Google AI Studio 申請 <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i></a>，再按右上「API 金鑰／型號」貼上。</span>
     </div>
     <div class="vcard claude">
-      <b><i class="fa-solid fa-star"></i> Claude 免金鑰版（推薦）</b>
+      <div class="vc-head">
+        <b><i class="fa-solid fa-star"></i> Claude 免金鑰版（推薦）</b>
+        <a class="btn small vc-go" href="https://claude.ai/artifact/TPhniT7wNiLfpGERFfE23f" target="_blank" rel="noopener noreferrer" title="在新分頁開啟 Claude 免金鑰版">改用我 <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
       <span>登入 Claude 帳號就能直接用，手機也行，不用申請任何金鑰。沒有帳號的話，打開後依畫面指示免費註冊即可（免費帳號也能用）。</span>
-      <a class="btn small" href="https://claude.ai/artifact/TPhniT7wNiLfpGERFfE23f" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> 改用免金鑰版</a>
     </div>
   </div>
 </div>
