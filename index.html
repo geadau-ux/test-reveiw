@@ -875,6 +875,10 @@ textarea, select, .keyrow input, #customModel { font-size: 15.5px; }
 .vcard .btn.vc-go:hover { filter: brightness(1.1); background: var(--mark); color: #ffffff; }
 :root[data-theme="dark"] .vcard .btn.vc-go { background: #3d51c7; border-color: #3d51c7; }
 .vcard a.btn.vc-go, .vcard a.btn.vc-go:hover { text-decoration: none; }
+.stale-warn { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin-bottom: 14px; border-radius: 14px; background: var(--red-soft); border: 2px solid var(--red); color: var(--red); }
+.stale-warn svg, .stale-warn i { font-size: 20px; margin-top: 3px; color: var(--red); flex: none; }
+.stale-warn b { display: block; font-size: 16px; }
+.stale-warn span { display: block; font-size: 14px; color: var(--ink); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -1633,10 +1637,13 @@ function httpError(status, msg, prov) {
     401: "API 金鑰無效，請確認是否貼錯",
     403: "金鑰沒有使用這個型號的權限",
     404: "找不到這個型號，請換一個型號",
-    429: "已達使用頻率或額度上限，請稍後再試或檢查帳單",
-    500: "服務暫時發生錯誤，請稍後再試", 503: "服務目前忙碌，請稍後再試", 529: "服務目前忙碌，請稍後再試",
+    429: "這把金鑰目前的使用次數或免費額度暫時用完了。\n請等幾分鐘再試；若常遇到，可以到 Google AI Studio 查看額度，或改用 Claude 免金鑰版。",
   };
-  const e = new Error((map[status] || `伺服器回應錯誤 (${status})`) + (msg ? `：${msg}` : ""));
+  const busy = "Google 的 Gemini 伺服器現在使用的人太多（這是暫時的，不是你的設定有問題）。\n小幫手已經自動重試，也換過其他 Gemini 型號，剛好都在忙。\n請等 1～2 分鐘再按一次「開始分析」；急著用的話，可以改用頁面上方的 Claude 免金鑰版。";
+  if (prov !== "claude") { map[500] = busy; map[503] = busy; map[504] = busy; }
+  else { map[500] = map[503] = map[504] = map[529] = "Anthropic 的伺服器現在使用的人太多（這是暫時的）。\n請等 1～2 分鐘再試一次。"; }
+  const quiet = [429, 500, 503, 504, 529].includes(status);
+  const e = new Error((map[status] || `伺服器回應錯誤 (${status})`) + (msg && !quiet ? `：${msg}` : ""));
   e.status = status; e.isApi = true; return e;
 }
 function netError(prov) {
@@ -1688,6 +1695,10 @@ async function callLLM({ provider = cfg.provider, key = activeKey(), model = act
         if (res.ok || !(BUSY.includes(res.status) || res.status === 404)) break;
       }
       if (res.ok && used !== model) toast(`這次改用 ${modelLabel("gemini", used)} 完成`);
+    }
+    if (!res.ok && BUSY.includes(res.status) && !noFallback) {
+      onStatus?.("所有 Gemini 型號都在忙，6 秒後再試最後一次…"); await wait(6000);
+      used = PROVIDERS.gemini.defaultModel; res = await go(used);
     }
     if (res.ok && (used !== model || res.retried)) onStatus?.("");
     if (!res.ok) { const j = await res.json().catch(() => ({})); throw httpError(res.status, j?.error?.message, provider); }
@@ -1855,8 +1866,9 @@ function renderAnalysis() {
   if (state.busy === "analysis") return thinking(`正在以「${DEPTHS[depth].name}」程度解題並分析，請稍候…`);
   if (!a) return `<div class="empty"><div class="big"><i class="fa-solid fa-magnifying-glass-chart"></i></div><h3>還沒有分析結果</h3><p>在左側上傳題目圖片或貼上題目文字，再按「開始分析」。</p></div>`;
   const secs = state.secs = analysisSections(a);
+  const stale = state.analysisStale ? `<div class="stale-warn" role="alert"><i class="fa-solid fa-triangle-exclamation"></i><div><b>這次分析沒有成功，下面是${state.isExample ? "範例" : "上一題"}的結果，不是左側目前這題。</b><span>請看左側紅框的說明，稍等一下再按「開始分析」。</span></div></div>` : "";
   const dname = DEPTHS[a.depth || "standard"]?.name || "標準";
-  return `
+  return stale + `
     <div class="topbar">
       <div>${state.isExample ? `<span class="sample-tag">範例</span><span class="hint">上傳你的題目後按「開始分析」，就會換成你的題目。</span>` : `<span class="depth-badge" style="margin:0">分析深度：${dname}</span>`}</div>
       <div class="row">
@@ -2448,6 +2460,7 @@ async function analyze() {
   // 網址欄有網址但還沒載入時，先自動載入
   if (state.mode === "img" && !state.imageFile && pendingUrl()) { if (!(await loadUrl(pendingUrl()))) return; }
   if (urlLoading) { if (!(await urlLoading)) return; }
+  state.analysisOk = false;
   const inp = currentInput();
   if (!inp) { setStatus(state.mode === "img" ? "請先放入題目圖片。" : "請先貼上題目文字。", true); return; }
   if (needKey(analyze)) return;
@@ -2460,9 +2473,11 @@ async function analyze() {
     const r = parseJSONLoose(text);
     if (r && r.error) setStatus("無法辨識題目：" + r.error, true);
     else if (!r || !r.abilityAssessment) setStatus("分析結果格式有誤，請按「開始分析」再試一次，或換一個型號。", true);
-    else { r.depth = depth; state.analysis = r; state.isExample = false; state.lastCtx = inp; }
+    else { r.depth = depth; state.analysis = r; state.isExample = false; state.lastCtx = inp; state.analysisOk = true; }
   } catch (e) { if (e?.name !== "AbortError") setStatus(errText(e), true); }
+  state.analysisStale = !state.analysisOk && !!state.analysis;
   state.busy = null; state.ctl = null; render();
+  if (state.analysisStale) setTimeout(() => document.querySelector(".stale-warn")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
 }
 
 async function generate(k) {
