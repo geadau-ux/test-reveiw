@@ -856,6 +856,18 @@ textarea, select, .keyrow input, #customModel { font-size: 15.5px; }
 @media (max-width: 560px) { .ver-badge { font-size: 13px; } }
 .model-line small { font-size: 13.5px; color: var(--ink-soft); } .model-line b { font-size: 16px; }
 @media (max-width: 860px) { .verstrip-in, .verstrip-in.one { grid-template-columns: minmax(0,1fr); } }
+
+/* 預覽圖：按鈕排在圖片上方，不再壓住題目 */
+.preview { display: grid; grid-template-columns: auto auto; justify-content: space-between; align-items: center; gap: 8px; padding: 8px; background: var(--field); border: 1px solid var(--line); border-radius: 14px; }
+.preview .float-btn, .preview .x { position: static; }
+.preview .float-btn { order: 1; justify-self: start; }
+.preview .x { order: 2; justify-self: end; }
+.preview img { order: 3; grid-column: 1 / -1; width: 100%; max-height: 380px; object-fit: contain; background: #ffffff; border-radius: 10px; border: 1px solid var(--line); }
+/* 浮動視窗：不留白、標題列顯示目前縮放 */
+.qf-b { background: #ffffff; line-height: 0; }
+.qf-b .qf-text { line-height: 1.8; }
+.qf-tools span { min-width: 4.6em; font-size: 12.5px; }
+.qf-h { cursor: move; }
 </style>
 </head>
 <body>
@@ -1011,18 +1023,17 @@ textarea, select, .keyrow input, #customModel { font-size: 15.5px; }
 </footer>
 <div class="toast" id="toast" hidden></div>
 <div class="qfloat" id="qFloat" hidden role="dialog" aria-label="題目對照視窗">
-  <div class="qf-h" id="qfHandle" title="按住這裡可以拖曳移動">
+  <div class="qf-h" id="qfHandle" title="按住標題列可以拖曳移動；拖曳視窗右下角可以改變大小">
     <i class="fa-solid fa-grip-vertical"></i><b>題目對照</b>
     <div class="qf-tools">
       <button type="button" id="qfOut" aria-label="縮小"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
       <span id="qfPct">100%</span>
       <button type="button" id="qfIn" aria-label="放大"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
-      <button type="button" id="qfFit" aria-label="符合視窗寬度" title="符合視窗寬度"><i class="fa-solid fa-left-right"></i></button>
+      <button type="button" id="qfFit" aria-label="符合寬度" title="圖片填滿視窗寬度，視窗高度自動貼合"><i class="fa-solid fa-left-right"></i></button>
       <button type="button" id="qfClose" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button>
     </div>
   </div>
   <div class="qf-b" id="qfBody"></div>
-  <div class="qf-tip">拖曳標題列移動・拖曳右下角改變大小</div>
 </div>
 
 <dialog id="settings" aria-labelledby="setTitle">
@@ -2219,20 +2230,33 @@ function qfDraw() {
   if (!src) { body.innerHTML = '<p class="hint" style="padding:12px">左側還沒有放入題目。</p>'; return; }
   body.innerHTML = src.img ? `<img src="${src.img}" alt="題目圖片" style="width:${Math.round(QF.scale * 100)}%">`
     : `<div class="qf-text" style="font-size:${(16 * QF.scale).toFixed(1)}px">${esc(src.text)}</div>`;
-  $("qfPct").textContent = Math.round(QF.scale * 100) + "%";
+  $("qfPct").textContent = QF.scale === 1 ? "符合寬度" : Math.round(QF.scale * 100) + "%";
+}
+// 依內容調整視窗高度，讓題目剛好填滿、不留白
+function qfFitHeight() {
+  const el = $("qFloat"), body = $("qfBody"), head = $("qfHandle");
+  const img = body.querySelector("img"), txt = body.querySelector(".qf-text");
+  const apply = () => {
+    const contentH = img ? img.getBoundingClientRect().height : (txt ? txt.scrollHeight : 120);
+    const h = Math.round(Math.min(innerHeight - 24, Math.max(150, head.offsetHeight + contentH + 4)));
+    el.style.height = h + "px"; QF.h = h;
+    const top = el.offsetTop; if (top + h > innerHeight - 8) { QF.y = Math.max(8, innerHeight - h - 12); el.style.top = QF.y + "px"; }
+    qfSave();
+  };
+  if (img && !img.complete) img.addEventListener("load", apply, { once: true }); else apply();
 }
 function qfPlace() {
   const el = $("qFloat"), vw = innerWidth, vh = innerHeight;
-  const w = Math.min(QF.w || Math.min(460, vw - 32), vw - 16), h = Math.min(QF.h || 340, vh - 24);
+  const w = Math.min(QF.w || Math.min(560, vw - 32), vw - 16), h = Math.min(QF.h || 340, vh - 24);
   el.style.width = w + "px"; el.style.height = h + "px";
   const x = QF.x ?? vw - w - 24, y = QF.y ?? vh - h - 24;
   el.style.left = Math.max(8, Math.min(x, vw - 80)) + "px"; el.style.top = Math.max(8, Math.min(y, vh - 48)) + "px";
 }
-function openFloat() { qfDraw(); $("qFloat").hidden = false; qfPlace(); }
+function openFloat() { QF.scale = 1; qfDraw(); $("qFloat").hidden = false; qfPlace(); qfFitHeight(); }
 $("qfClose").onclick = () => { $("qFloat").hidden = true; };
 $("qfIn").onclick = () => { QF.scale = Math.min(4, +(QF.scale + 0.25).toFixed(2)); qfSave(); qfDraw(); };
 $("qfOut").onclick = () => { QF.scale = Math.max(0.5, +(QF.scale - 0.25).toFixed(2)); qfSave(); qfDraw(); };
-$("qfFit").onclick = () => { QF.scale = 1; qfSave(); qfDraw(); };
+$("qfFit").onclick = () => { QF.scale = 1; qfSave(); qfDraw(); qfFitHeight(); };
 $("qfBody").addEventListener("wheel", (e) => { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); QF.scale = Math.max(0.5, Math.min(4, +(QF.scale + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2))); qfSave(); qfDraw(); }, { passive: false });
 (() => {
   const el = $("qFloat"), h = $("qfHandle"); let sx, sy, ox, oy, drag = false;
