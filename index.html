@@ -351,6 +351,13 @@ dialog#zoomDlg::backdrop { background: rgba(6,7,18,.6); -webkit-backdrop-filter:
 .zoom-wrap { overflow: auto; padding: 20px clamp(16px, 3vw, 32px) 28px; }
 #zoomBody { line-height: 1.75; }
 #zoomBody .md { max-width: none; }
+.zoom-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px clamp(16px, 3vw, 24px); border-top: 1px solid var(--line); }
+.zoom-nav .btn { padding: 10px 16px; font-size: 15px; max-width: 46%; }
+.zoom-nav .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zoom-nav .btn[disabled] { opacity: .45; cursor: default; }
+.zoom-pos { display: flex; flex-direction: column; align-items: center; gap: 2px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.zoom-pos .hint { font-weight: 400; font-size: 12px; }
+@media (max-width: 560px) { .zoom-pos .hint { display: none; } .zoom-nav .btn { font-size: 14px; padding: 9px 12px; } }
 
 
 /* ===== 配色 v3：白底卡片＋深靛藍標題橫幅＋黃色提醒條；各段用淡藍、淡綠、淡橘、淡紫區分 ===== */
@@ -641,6 +648,11 @@ dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,
     </div>
   </div>
   <div class="zoom-wrap"><div id="zoomBody"></div></div>
+  <div class="zoom-nav" id="zoomNav">
+    <button type="button" class="btn" id="zoomPrev"><i class="fa-solid fa-chevron-left"></i> <span>上一頁</span></button>
+    <div class="zoom-pos"><span id="zoomPos"></span><span class="hint">鍵盤 ← → 也可以換頁</span></div>
+    <button type="button" class="btn primary" id="zoomNext"><span>下一頁</span> <i class="fa-solid fa-chevron-right"></i></button>
+  </div>
 </dialog>
 
 <script>
@@ -1369,8 +1381,8 @@ function render() {
   p.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { state.tab = b.dataset.go; render(); if (!state.md[b.dataset.go]) generate(b.dataset.go); }));
   p.querySelectorAll("[data-gen]").forEach((b) => (b.onclick = () => generate(b.dataset.gen, !!b.dataset.fresh)));
   p.querySelectorAll("[data-act=copy], [data-act=copyall]").forEach((b) => (b.onclick = copyCurrent));
-  p.querySelectorAll("[data-act=zoom]").forEach((b) => (b.onclick = () => openZoom(FEATURES[state.tab].label, `<div class="md">${$("mdOut").innerHTML}</div>`, currentPlain())));
-  p.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => { const s = state.secs[+b.dataset.zoom]; openZoom(secLabel(s), s.body, s.text); }));
+  p.querySelectorAll("[data-act=zoom]").forEach((b) => (b.onclick = () => openZoom(featurePages(), 0)));
+  p.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => openZoom(state.secs.map((s) => ({ title: secLabel(s), html: s.body, text: `【${secLabel(s)}】\n${s.text}` })), +b.dataset.zoom)));
   p.querySelectorAll("[data-copysec]").forEach((b) => (b.onclick = (e) => { const s = state.secs[+b.dataset.copysec]; copyText(`【${secLabel(s)}】\n${s.text}`, e.currentTarget, s.title); }));
   p.querySelectorAll("[data-act=dl]").forEach((b) => (b.onclick = downloadCurrent));
   const stop = $("stopBtn"); if (stop) stop.onclick = () => state.ctl?.abort();
@@ -1428,9 +1440,48 @@ async function copyCurrent(e) { return copyText(currentPlain(), e?.currentTarget
 let zoomScale = (() => { const v = parseFloat(load("ea_zoom")); return v >= 1 && v <= 2.6 ? v : 1.5; })();
 let zoomText = "";
 function applyZoom() { $("zoomBody").style.zoom = zoomScale; $("zoomPct").textContent = Math.round(zoomScale * 100) + "%"; }
-function openZoom(title, html, text) {
-  $("zoomTitle").textContent = title; $("zoomBody").innerHTML = html; zoomText = text;
-  applyZoom(); $("zoomDlg").showModal(); $("zoomDlg").querySelector(".zoom-wrap").scrollTop = 0;
+let zoomPages = [], zoomIdx = 0;
+function openZoom(pages, idx = 0) {
+  zoomPages = pages; zoomIdx = Math.max(0, Math.min(idx, pages.length - 1));
+  showZoomPage(); applyZoom(); if (!$("zoomDlg").open) $("zoomDlg").showModal();
+}
+function showZoomPage() {
+  const pg = zoomPages[zoomIdx], n = zoomPages.length;
+  $("zoomTitle").textContent = pg.title; $("zoomBody").innerHTML = pg.html; zoomText = pg.text;
+  $("zoomDlg").querySelector(".zoom-wrap").scrollTop = 0;
+  $("zoomNav").hidden = n <= 1;
+  $("zoomPos").textContent = `${zoomIdx + 1} / ${n}`;
+  $("zoomPrev").disabled = zoomIdx === 0; $("zoomNext").disabled = zoomIdx === n - 1;
+  $("zoomPrev").title = zoomIdx > 0 ? "上一頁：" + zoomPages[zoomIdx - 1].title : "";
+  $("zoomNext").querySelector("span").textContent = zoomIdx < n - 1 ? "下一頁：" + zoomPages[zoomIdx + 1].title : "已是最後一頁";
+}
+function zoomGo(d) { const j = zoomIdx + d; if (j < 0 || j >= zoomPages.length) return; zoomIdx = j; showZoomPage(); }
+$("zoomPrev").onclick = () => zoomGo(-1);
+$("zoomNext").onclick = () => zoomGo(1);
+$("zoomDlg").addEventListener("keydown", (e) => {
+  if (["ArrowRight", "PageDown"].includes(e.key)) { e.preventDefault(); zoomGo(1); }
+  else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); zoomGo(-1); }
+});
+// 教案／類似題：依標題或分隔線切成多頁
+function featurePages() {
+  const o = $("mdOut"), label = FEATURES[state.tab].label, groups = [];
+  let cur = null;
+  const start = () => (cur = { nodes: [] }, groups.push(cur));
+  [...o.children].forEach((el) => {
+    if (el.tagName === "HR") { cur = null; return; }
+    if (el.tagName === "H2" || el.tagName === "H1" && cur && cur.nodes.length) start();
+    if (!cur) start();
+    cur.nodes.push(el);
+  });
+  const pages = groups.filter((g) => g.nodes.length).map((g, i) => {
+    const head = g.nodes.find((x) => /^H[1-4]$/.test(x.tagName)) || g.nodes[0].querySelector("strong") || null;
+    const title = (head ? head.textContent.trim() : "").slice(0, 40) || `${label}（${i + 1}）`;
+    const box = document.createElement("div"); box.className = "md"; g.nodes.forEach((x) => box.appendChild(x.cloneNode(true)));
+    box.style.cssText = "position:absolute;left:-9999px;top:0;width:800px"; document.body.appendChild(box);
+    const text = box.innerText.trim(); box.remove(); box.removeAttribute("style");
+    return { title, html: box.outerHTML, text };
+  });
+  return pages.length ? pages : [{ title: label, html: `<div class="md">${o.innerHTML}</div>`, text: o.innerText.trim() }];
 }
 $("zoomIn").onclick = () => { zoomScale = Math.min(2.6, +(zoomScale + 0.2).toFixed(1)); store("ea_zoom", zoomScale); applyZoom(); };
 $("zoomOut").onclick = () => { zoomScale = Math.max(1, +(zoomScale - 0.2).toFixed(1)); store("ea_zoom", zoomScale); applyZoom(); };
