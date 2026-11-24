@@ -537,6 +537,26 @@ dialog#settings::backdrop, dialog#zoomDlg::backdrop { background: rgba(20,28,70,
 .pastebox textarea:focus, .pastebox textarea:focus-visible { outline: none; }
 .pastebox textarea::placeholder { color: var(--mark); opacity: .85; font-weight: 600; }
 .pastebox.ready textarea::placeholder { color: var(--green); opacity: 1; }
+
+/* 更多選單 */
+details.more { position: relative; }
+details.more > summary { list-style: none; cursor: pointer; }
+details.more > summary::-webkit-details-marker { display: none; }
+.more-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 250px; padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 14px 34px -14px rgba(20,30,80,.35); }
+.more-pop button { white-space: nowrap; display: flex; align-items: center; gap: 8px; text-align: left; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 0; border-radius: 8px; padding: 9px 12px; cursor: pointer; }
+.more-pop button:hover, .more-pop button:focus-visible { background: var(--mark-soft); color: var(--mark); outline: none; }
+.btn.small.primary { font-size: 14px; padding: 7px 14px; letter-spacing: .02em; }
+/* 類似題卡片 */
+.sim-stem { margin: 0 0 10px; font-size: 16px; line-height: 1.85; font-weight: 500; }
+.sim-opts { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px 14px; }
+.sim-opts li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; }
+.sim-ans { border-top: 1px dashed var(--line); padding-top: 10px; }
+.sim-ans > summary { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--mark); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--mark-line, var(--line)); background: var(--paper); list-style: none; }
+.sim-ans > summary::-webkit-details-marker { display: none; }
+.sim-ans[open] > summary { background: var(--mark-soft); }
+.sim-ans-b { margin-top: 10px; }
+.sim-ans-b p { margin: 0 0 6px; }
 </style>
 </head>
 <body>
@@ -1358,9 +1378,9 @@ function currentInput() {
 
 // ---------- 分頁 ----------
 const TAB_ICONS = { analysis: "fa-magnifying-glass-chart", similar: "fa-clone", remedial: "fa-hand-holding-heart", polya: "fa-route", conj: "fa-lightbulb", editor: "fa-pen-to-square" };
-const TABS = [["analysis", "試題分析"], ["similar", "類似題"], ["remedial", "補救教學"], ["polya", "Polya 教案"], ["conj", "臆測教案"], ["editor", "Markdown 預覽"]];
+const TABS = [["analysis", "試題分析"], ["similar", "類似題"], ["remedial", "補救教學"], ["polya", "Polya 教案"], ["conj", "臆測教案"], ["editor", "Markdown 編輯（進階）"]];
 function renderTabs() {
-  $("tabs").innerHTML = TABS.map(([k, l]) => {
+  $("tabs").innerHTML = TABS.filter(([k]) => k !== "editor" || state.tab === "editor").map(([k, l]) => {
     const done = k === "analysis" ? !!state.analysis : !!state.md[k];
     return `<button class="tab" role="tab" data-k="${k}" aria-selected="${state.tab === k}"><i class="fa-solid ${TAB_ICONS[k]}"></i>${l}${done && !(k === "analysis" && state.isExample) ? '<span class="dot" aria-label="已產生"></span>' : ""}</button>`;
   }).join("");
@@ -1419,9 +1439,8 @@ function renderAnalysis() {
     <div class="topbar">
       <div>${state.isExample ? `<span class="sample-tag">範例</span><span class="hint">上傳你的題目後按「開始分析」，就會換成你的題目。</span>` : `<span class="depth-badge" style="margin:0">分析深度：${dname}</span>`}</div>
       <div class="row">
-        <button class="btn small" data-act="copyall"><i class="fa-regular fa-copy"></i> 複製全部分析</button>
-        <button class="btn small ghost" data-act="toeditor"><i class="fa-solid fa-pen-to-square"></i> 編輯 Markdown</button>
-        <button class="btn small ghost" data-act="dl"><i class="fa-solid fa-download"></i> 下載 .md</button>
+        <button class="btn small primary" data-act="copyall" title="複製後可直接貼到 Word、LINE 或聯絡簿"><i class="fa-regular fa-copy"></i> 複製整份分析文字</button>
+        ${moreMenu()}
       </div>
     </div>
     ${secs.map((s, i) => `<section class="blk tone-${({ "一": "blue", "二": "green", "三": "orange", "四": "purple" })[s.n] || (s.title === "題目與正確答案" ? "yellow" : "plain")}" aria-label="${esc(secLabel(s))}">
@@ -1458,13 +1477,31 @@ function renderFeature(k) {
       <button class="btn primary" data-gen="${k}" ${has || currentInput() ? "" : ""}><i class="fa-solid fa-wand-magic-sparkles"></i> 產生${f.label}</button>
       <p class="hint" style="margin-top:10px">${currentInput() ? "會使用左側目前的題目。" : "請先在左側放入題目。"}</p></div>`;
   }
+  const regen = `<button class="btn small" data-gen="${k}" data-fresh="1"><i class="fa-solid fa-rotate-right"></i> 重新產生</button>`;
+  if (k === "similar" && state.sim) {
+    const tones = ["blue", "green", "orange"];
+    const secs = state.secs = state.sim.map((q, i) => ({ n: String(i + 1), title: `類題 ${i + 1}`, body: simCardHtml(q), text: simPlain(q) }));
+    return `<div class="topbar">
+        <div class="hint">共 ${secs.length} 題。答案先收起來，方便投影給學生作答；每題都可以單獨放大或複製。</div>
+        <div class="row"><button class="btn small primary" data-act="copy" title="三題連同答案與解析一起複製"><i class="fa-regular fa-copy"></i> 複製全部類題文字</button>${regen}${moreMenu()}</div>
+      </div>
+      ${secs.map((s, i) => `<section class="blk tone-${tones[i % 3]}" aria-label="${esc(s.title)}">
+        <div class="blk-h">
+          <h2 class="sec"><span class="n">${s.n}</span>${s.title}</h2>
+          <div class="blk-tools">
+            <button type="button" class="icon-btn" data-zoom="${i}" title="放大檢視" aria-label="放大檢視：${esc(s.title)}"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button type="button" class="icon-btn" data-copysec="${i}" title="複製這一題" aria-label="複製：${esc(s.title)}"><i class="fa-regular fa-copy"></i></button>
+          </div>
+        </div>
+        <div class="blk-b">${s.body}</div>
+      </section>`).join("")}`;
+  }
   return `<div class="md" id="mdOut">${mdHtml(md)}</div>
     <div class="toolbar">
       <button class="btn small ghost" data-act="zoom"><i class="fa-solid fa-magnifying-glass-plus"></i> 放大檢視</button>
-      <button class="btn small ghost" data-act="toeditor"><i class="fa-solid fa-pen-to-square"></i> 編輯 Markdown</button>
-      <button class="btn small ghost" data-act="copy"><i class="fa-regular fa-copy"></i> 複製文字</button>
-      <button class="btn small ghost" data-act="dl"><i class="fa-solid fa-download"></i> 下載 .md</button>
-      <button class="btn small" data-gen="${k}" data-fresh="1"><i class="fa-solid fa-rotate-right"></i> 重新產生</button>
+      <button class="btn small primary" data-act="copy" title="複製後可直接貼到 Word、LINE 或聯絡簿"><i class="fa-regular fa-copy"></i> 複製全部文字</button>
+      ${regen}
+      ${moreMenu()}
     </div>`;
 }
 
@@ -1596,6 +1633,39 @@ function openInEditor() {
   toast("已帶入 Markdown 預覽，可以直接修改");
 }
 
+// ---------- 類似題（固定三題、逐題卡片） ----------
+const SIMILAR_JSON = `請依據這道試題的內容目標與難度，設計「三題」類似的數學練習題。
+題目要貼近原題的考核觀念，但數字或情境要更換；請自行驗算，確認數字合理、答案唯一。
+只回傳一個 JSON 物件，不要其他文字，格式如下：
+{"questions":[{"stem":"題目敘述（完整的一段話）","options":["(1) …","(2) …","(3) …","(4) …"],"answer":"參考答案（含選項編號與數值）","steps":["解析第 1 步","解析第 2 步"]}]}
+questions 必須恰好 3 題；原題若不是選擇題，options 給空陣列 []；steps 寫 2–4 步，每步一句。`;
+function simItemsOk(r) { return Array.isArray(r?.questions) && r.questions.length && r.questions.every((q) => q && q.stem); }
+function simToMd(items) {
+  return items.map((q, i) => [`## 類題 ${i + 1}`, "", q.stem, "",
+    ...(q.options?.length ? [q.options.map((o) => `- ${o}`).join("\n"), ""] : []),
+    `**參考答案**：${q.answer || ""}`, "",
+    ...(q.steps?.length ? ["**解析**", "", q.steps.map((s, j) => `${j + 1}. ${s}`).join("\n")] : [])].join("\n")).join("\n\n---\n\n") + "\n";
+}
+function simPlain(q) {
+  return tidyMath([q.stem, ...(q.options || []), `參考答案：${q.answer || ""}`, ...(q.steps?.length ? ["解析：", ...q.steps.map((s, j) => `${j + 1}. ${s}`)] : [])].join("\n"));
+}
+function simCardHtml(q) {
+  const opts = q.options || [], steps = q.steps || [];
+  return `<p class="sim-stem">${esc(q.stem)}</p>
+    ${opts.length ? `<ul class="sim-opts">${opts.map((o) => `<li>${esc(o)}</li>`).join("")}</ul>` : ""}
+    <details class="sim-ans"><summary><i class="fa-solid fa-eye"></i> 顯示答案與解析</summary>
+      <div class="sim-ans-b"><p><b>參考答案</b>　${esc(q.answer)}</p>${steps.length ? `<ol class="steps">${steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}</div>
+    </details>`;
+}
+function moreMenu() {
+  return `<details class="more"><summary class="btn small ghost"><i class="fa-solid fa-ellipsis"></i> 更多</summary>
+    <div class="more-pop">
+      <button type="button" data-act="dl"><i class="fa-solid fa-download"></i> 下載成檔案（.md）</button>
+      <button type="button" data-act="toeditor"><i class="fa-solid fa-pen-to-square"></i> 用 Markdown 編輯（進階）</button>
+    </div></details>`;
+}
+document.addEventListener("click", (e) => document.querySelectorAll("details.more[open]").forEach((d) => { if (!d.contains(e.target)) d.open = false; }));
+
 // ---------- 匯出 ----------
 function analysisMd(a) {
   let s = `# 試題分析報告（分析深度：${DEPTHS[a.depth || "standard"]?.name || "標準"}）\n\n`;
@@ -1638,6 +1708,7 @@ async function copyText(text, btn, label) {
 }
 function currentPlain() {
   if (state.tab === "analysis") return analysisPlain(state.analysis);
+  if (state.tab === "similar" && state.sim) return state.sim.map((q, i) => `【類題 ${i + 1}】\n${simPlain(q)}`).join("\n\n");
   const o = $("mdOut"); return o ? o.innerText.trim() : tidyMath(state.md[state.tab] || "");
 }
 async function copyCurrent(e) { return copyText(currentPlain(), e?.currentTarget, state.tab === "analysis" ? "全部分析" : FEATURES[state.tab].label); }
@@ -1717,7 +1788,7 @@ async function analyze() {
   const inp = currentInput();
   if (!inp) { setStatus(state.mode === "img" ? "請先放入題目圖片。" : "請先貼上題目文字。", true); return; }
   if (needKey(analyze)) return;
-  setStatus(""); state.md = {}; state.tab = "analysis"; state.busy = "analysis";
+  setStatus(""); state.md = {}; state.sim = null; state.tab = "analysis"; state.busy = "analysis";
   state.ctl = new AbortController(); render();
   try {
     const { text } = await callLLM({ prompt: `${ANALYSIS_TASK}\n\n${DEPTHS[depth].prompt}\n\n${inp.ctx}`, image: inp.images, json: true, temperature: 0.2, maxTokens: depth === "deep" ? 10000 : 4000, signal: state.ctl.signal });
@@ -1734,12 +1805,19 @@ async function generate(k) {
   if (!inp) { setStatus(state.mode === "img" ? "請先放入題目圖片。" : "請先貼上題目文字。", true); return; }
   if (state.busy) { toast("請等目前的工作完成"); return; }
   if (needKey(() => generate(k))) return;
-  setStatus(""); state.busy = k; state.tab = k; delete state.md[k];
+  setStatus(""); state.busy = k; state.tab = k; delete state.md[k]; if (k === "similar") state.sim = null;
   state.ctl = new AbortController(); render();
   const a = state.analysis && !state.isExample ? state.analysis : null;
   const known = a ? `\n\n【已完成的試題分析，可參考】\n題目：${a.question || ""}\n正確答案：${a.answer || ""}\n能力面向：${a.abilityAssessment}\n錯題主因：${(a.errorCauses || []).map((c) => c.title + "—" + c.summary).join("；")}` : "";
   const prompt = `${FEATURES[k].prompt}\n\n請以繁體中文撰寫，直接輸出內容，不要開場白或結語。\n\n${MATH_RULE}\n\n${inp.ctx}${known}`;
   try {
+    if (k === "similar") {
+      const { text } = await callLLM({ prompt: `${SIMILAR_JSON}\n\n${MATH_RULE}\n\n${inp.ctx}${known}`, image: inp.images, json: true, temperature: 0.4, maxTokens: 6000, signal: state.ctl.signal });
+      const r = parseJSONLoose(text);
+      if (!simItemsOk(r)) throw new Error("類似題的格式不完整，請按「重新產生」再試一次。");
+      state.sim = r.questions; state.md.similar = simToMd(r.questions);
+      state.busy = null; state.ctl = null; render(); return;
+    }
     const { text, truncated } = await callLLM({ prompt, image: inp.images, signal: state.ctl.signal, maxTokens: 12000,
       onText: (t) => { state.md[k] = t; const o = $("mdOut"); if (o && state.tab === k) o.innerHTML = mdHtml(t); else if (state.tab === k) render(); } });
     state.md[k] = text + (truncated ? "\n\n> 內容過長被截斷，可按「重新產生」再試一次。" : "");
